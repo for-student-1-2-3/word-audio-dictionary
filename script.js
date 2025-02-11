@@ -1,28 +1,48 @@
-// JSONデータを取得して単語リストを作成
-fetch("words.json")
-    .then(response => response.json())
-    .then(words => {
-        const wordList = document.getElementById("word-list");
+let words = [];
+let currentIndex = 0;
 
-        words.forEach((wordObj, index) => {
-            const wordItem = document.createElement("div");
-            wordItem.className = "word-item";
+async function loadWords() {
+    try {
+        const response = await fetch("words.json");
+        words = await response.json();
+        loadWord();
+    } catch (error) {
+        console.error("Error loading words.json:", error);
+    }
+}
 
-            const wordText = document.createElement("span");
-            wordText.className = "word-text";
-            wordText.textContent = wordObj.word;
+function loadWord() {
+    if (words.length === 0) {
+        document.getElementById("flashcard").innerHTML = "すべての単語を覚えました！";
+        return;
+    }
 
-            const playButton = document.createElement("button");
-            playButton.className = "play-button";
-            playButton.textContent = "🔊 再生";
-            playButton.onclick = () => {
-                const audio = new Audio(wordObj.audio);
-                audio.play();
-            };
+    const currentWord = words[currentIndex];
+    document.getElementById("word").textContent = currentWord.word;
+    document.getElementById("pos").textContent = `(${currentWord.pos})`;
+    document.getElementById("translation").textContent = currentWord.translation || "（翻訳なし）";
+    document.getElementById("translation").classList.add("hidden");
+}
 
-            wordItem.appendChild(wordText);
-            wordItem.appendChild(playButton);
-            wordList.appendChild(wordItem);
-        });
-    })
-    .catch(error => console.error("Error loading words:", error));
+document.getElementById("show-translation").addEventListener("click", () => {
+    document.getElementById("translation").classList.remove("hidden");
+});
+
+document.getElementById("play-audio").addEventListener("click", () => {
+    if (words.length > 0) {
+        new Audio(words[currentIndex].audio).play();
+    }
+});
+
+document.getElementById("learned").addEventListener("click", () => {
+    words.splice(currentIndex, 1);
+    if (words.length > 0) {
+        currentIndex = currentIndex % words.length;
+        loadWord();
+    } else {
+        document.getElementById("flashcard").innerHTML = "すべての単語を覚えました！";
+    }
+});
+
+// 初回データ読み込み
+loadWords();
