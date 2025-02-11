@@ -20,11 +20,14 @@ function loadWord() {
     const currentWord = words[currentIndex];
     document.getElementById("word").textContent = currentWord.word;
     document.getElementById("pos").textContent = `(${currentWord.pos})`;
-    document.getElementById("translation").textContent = currentWord.translation || "（翻訳なし）";
+    document.getElementById("translation").textContent = currentWord.translation;
+    
+    document.getElementById("pos").classList.add("hidden");
     document.getElementById("translation").classList.add("hidden");
 }
 
 document.getElementById("show-translation").addEventListener("click", () => {
+    document.getElementById("pos").classList.remove("hidden");
     document.getElementById("translation").classList.remove("hidden");
 });
 
