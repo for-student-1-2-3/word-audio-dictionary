@@ -1,58 +1,412 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>単語帳アプリ</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://code.responsivevoice.org/responsivevoice.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSV 単語帳アプリ</title>
+  <style>
+    /* 基本スタイル */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f9;
+      color: #333;
+    }
+    #header {
+      background-color: #007bff;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 20px;
+      text-align: center;
+    }
+    .actions {
+      text-align: center;
+      margin: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #sections {
+      text-align: center;
+      margin: 20px;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    /* ハンバーガーメニュー */
+    .hamburger-menu {
+      position: relative;
+      display: inline-block;
+    }
+    .hamburger-button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    .menu-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      padding: 10px;
+      z-index: 1;
+    }
+    .menu-content button {
+      background: none;
+      color: #007bff;
+      border: none;
+      padding: 10px;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+    .menu-content button:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
 </head>
 <body>
-    <div id="header">
-        <div>
-            <button onclick="shuffleWords()">シャッフル</button>
-            <button onclick="resetList()">リセット</button>
-        </div>
-
-        <!-- ハンバーガーメニュー -->
-        <div class="hamburger-menu">
-            <button class="hamburger-button">≡</button>
-            <div class="menu-content">
-                <h3 class="menu-section-title">エクスポート</h3>
-                <button onclick="exportCSV()">全データをエクスポート</button>
-                <button onclick="exportMyWordsToCSV()">My単語帳をエクスポート</button>
-
-                <h3 class="menu-section-title">インポート</h3>
-                <button onclick="document.getElementById('importFileAdd').click()">CSVから追加</button>
-                <button onclick="document.getElementById('importFileReplace').click()">CSVで置換</button>
-                <input type="file" id="importFileAdd" accept=".csv" onchange="importCSV(event, 'add')">
-                <input type="file" id="importFileReplace" accept=".csv" onchange="importCSV(event, 'replace')">
-            </div>
-        </div>
+  <div id="header">
+    <div>
+      <h1>CSV 単語帳アプリ</h1>
     </div>
-
-    <div id="progress">あと <span id="remainingCount">5</span> 語 / 合計 <span id="totalCount">5</span> 語</div>
-    <div id="currentSection">現在のセクション: <span id="sectionTitle">セクション1</span></div>
-
-    <div class="card">
-        <h2 id="wordDisplay">Loading...</h2>
-        <p id="meaningDisplay" class="hidden"></p>
-        <p id="hintDisplay" class="hidden"></p>
+    <div class="hamburger-menu">
+      <button class="hamburger-button">≡</button>
+      <div class="menu-content">
+        <h3>インポート / エクスポート</h3>
+        <button onclick="document.getElementById('importFileAdd').click()">CSVから追加</button>
+        <button onclick="document.getElementById('importFileReplace').click()">CSVで置換</button>
+        <input type="file" id="importFileAdd" accept=".csv">
+        <input type="file" id="importFileReplace" accept=".csv">
+      </div>
     </div>
+  </div>
 
-    <div class="actions">
-        <button id="prevButton">前へ</button>
-        <button id="confirmButton">答えを見る</button>
-        <button id="learnedButton">覚えた</button>
-        <button id="notLearnedButton">次へ</button>
-        <button id="hintButton">ヒント</button>
-        <button id="speakButton">発音</button>
-        <button id="addToMyWordsButton">My単語帳に追加</button>
-    </div>
+  <div id="progress" style="text-align:center; margin: 10px;"></div>
+  <div id="currentSection" style="text-align:center; margin: 10px;"></div>
 
-    <div id="sections"></div>
+  <div class="card">
+    <h2 id="wordDisplay">Loading...</h2>
+    <p id="meaningDisplay"></p>
+    <p id="hintDisplay"></p>
+  </div>
 
-    <script src="app.js"></script>
+  <div class="actions">
+    <button id="confirmButton">答えを見る</button>
+    <button id="learnedButton">覚えた</button>
+    <button id="notLearnedButton">次の単語</button>
+    <button id="speakButton">発音</button>
+  </div>
+
+  <div id="sections"></div>
+
+  <script>
+    // ローカルストレージ用ユーティリティ関数
+    const saveToLocalStorage = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+    const loadFromLocalStorage = (key) => JSON.parse(localStorage.getItem(key) || 'null');
+    const loadFromLocalStorageValue = (key, defaultValue) => {
+      const item = localStorage.getItem(key);
+      if (item) {
+        try {
+          return JSON.parse(item);
+        } catch (e) {
+          return defaultValue;
+        }
+      } else {
+        return defaultValue;
+      }
+    };
+
+    // ローカルストレージのキー
+    const SECTIONS_KEY = "sections";
+    const PROGRESS_KEY = "sectionProgress";
+    const CURRENT_SECTION_KEY = "currentSectionIndex";
+    const CURRENT_INDEX_KEY = "currentWordIndex";
+
+    // デフォルトのセクション（サンプルCSV内容）
+    const defaultSection = [
+      { id: "B01001", word: "add",    phonetic: "æd",      partOfSpeech: "動詞", meaning: "加える、（数値を）足す" },
+      { id: "B01002", word: "after",  phonetic: "ˈæfˌtər", partOfSpeech: "前置詞", meaning: "～のあとに（の）、～以降に" },
+      { id: "B01003", word: "accident", phonetic: "ˈæksədənt", partOfSpeech: "名詞", meaning: "事故、災難、偶然の出来事" },
+      { id: "B01004", word: "action", phonetic: "ˈækʃən",  partOfSpeech: "名詞", meaning: "動作" }
+    ];
+
+    // グローバル変数
+    let sections = loadFromLocalStorage(SECTIONS_KEY);
+    if (!sections || !Array.isArray(sections) || sections.length === 0) {
+      sections = [defaultSection];
+      saveToLocalStorage(SECTIONS_KEY, sections);
+    }
+    let sectionProgress = loadFromLocalStorageValue(PROGRESS_KEY, {}); // { セクション番号: [学習済みインデックス] }
+    let currentSectionIndex = loadFromLocalStorageValue(CURRENT_SECTION_KEY, 0);
+    if (currentSectionIndex < 0 || currentSectionIndex >= sections.length) {
+      currentSectionIndex = 0;
+      saveToLocalStorage(CURRENT_SECTION_KEY, currentSectionIndex);
+    }
+    let data = [];  // 現在のセクションの未学習単語
+    let index = loadFromLocalStorageValue(CURRENT_INDEX_KEY, 0);
+
+    // DOM要素
+    let wordDisplay, meaningDisplay, hintDisplay, confirmButton, learnedButton, notLearnedButton, speakButton, progressDisplay, sectionContainer, currentSectionDisplay;
+
+    // 現在のセクションの未学習単語をロード（進捗に応じてフィルタ）
+    function loadCurrentSectionData() {
+      const learnedIndices = sectionProgress[currentSectionIndex] || [];
+      data = sections[currentSectionIndex].filter((_, idx) => !learnedIndices.includes(idx));
+      if (index >= data.length) {
+        index = 0;
+        saveToLocalStorage(CURRENT_INDEX_KEY, index);
+      }
+      currentSectionDisplay.textContent = `現在のセクション: CSVセクション ${currentSectionIndex + 1}`;
+    }
+
+    // 進捗表示の更新
+    function updateProgress() {
+      const totalWords = sections[currentSectionIndex].length;
+      const learnedCount = sectionProgress[currentSectionIndex] ? sectionProgress[currentSectionIndex].length : 0;
+      const remainingWords = totalWords - learnedCount;
+      if (remainingWords === 0) {
+        progressDisplay.textContent = `学習完了！ 合計 ${totalWords} 語`;
+      } else {
+        progressDisplay.textContent = `あと ${remainingWords} 語 / 合計 ${totalWords} 語`;
+      }
+    }
+
+    // カード（表面）の表示：単語のみ
+    function showCard() {
+      if (!data || data.length === 0) {
+        wordDisplay.textContent = "Good Job!";
+        meaningDisplay.textContent = "";
+        hintDisplay.textContent = "";
+        confirmButton.style.display = "none";
+        learnedButton.style.display = "none";
+        notLearnedButton.style.display = "none";
+        speakButton.style.display = "none";
+        return;
+      }
+      wordDisplay.textContent = data[index].word || "未設定";
+      meaningDisplay.textContent = "";
+      hintDisplay.textContent = "";
+      confirmButton.style.display = "inline";
+      learnedButton.style.display = "none";
+      notLearnedButton.style.display = "none";
+      speakButton.style.display = "inline";
+    }
+
+    // カード（裏面）の表示：意味、品詞、発音記号
+    function showBack() {
+      if (!data || !data[index]) {
+        meaningDisplay.textContent = "データがありません";
+        return;
+      }
+      const currentWord = data[index];
+      meaningDisplay.textContent = `【${currentWord.partOfSpeech}】 ${currentWord.meaning}`;
+      hintDisplay.textContent = `発音記号: ${currentWord.phonetic}`;
+      confirmButton.style.display = "none";
+      learnedButton.style.display = "inline";
+      notLearnedButton.style.display = "inline";
+    }
+
+    // 現在の単語を「覚えた」としてマークする
+    function markAsLearned() {
+      if (data.length > 0) {
+        const learnedWord = data[index];
+        const originalIndex = sections[currentSectionIndex].findIndex(item => item.id === learnedWord.id);
+        if (originalIndex === -1) {
+          console.error("単語が見つかりません:", learnedWord);
+          return;
+        }
+        if (!sectionProgress[currentSectionIndex]) {
+          sectionProgress[currentSectionIndex] = [];
+        }
+        if (!sectionProgress[currentSectionIndex].includes(originalIndex)) {
+          sectionProgress[currentSectionIndex].push(originalIndex);
+        }
+        saveToLocalStorage(PROGRESS_KEY, sectionProgress);
+        data.splice(index, 1);
+        if (index >= data.length) {
+          index = 0;
+        }
+        saveToLocalStorage(CURRENT_INDEX_KEY, index);
+        updateProgress();
+        showCard();
+      }
+    }
+
+    // 次の単語へ
+    function nextCard() {
+      if (data.length > 0) {
+        index = (index + 1) % data.length;
+        saveToLocalStorage(CURRENT_INDEX_KEY, index);
+        showCard();
+      }
+    }
+
+    // 音声再生：現在の単語のIDに対応する音声ファイルを再生
+    function speakCurrentWord() {
+      if (!data || !data[index]) return;
+      const id = data[index].id;
+      const audioUrl = `https://for-student-1-2-3.github.io/word-audio-dictionary/audio/${id}.mp3`;
+      const audio = new Audio(audioUrl);
+      audio.play().catch(error => {
+        console.error("Audio再生エラー:", error);
+      });
+    }
+
+    // CSVでインポートされた各セクション用のボタンを作成
+    function createSectionButtons() {
+      sectionContainer.innerHTML = "";
+      sections.forEach((section, idx) => {
+        const button = document.createElement("button");
+        button.textContent = `CSVセクション ${idx + 1}`;
+        button.onclick = function() {
+          loadSection(idx);
+        };
+        sectionContainer.appendChild(button);
+      });
+      updateSectionButtonStyles();
+    }
+
+    // セクションボタンのスタイル更新（現在のセクションをハイライト）
+    function updateSectionButtonStyles() {
+      Array.from(sectionContainer.children).forEach((button, idx) => {
+        if (idx === currentSectionIndex) {
+          button.style.backgroundColor = "#28a745";
+          button.style.color = "white";
+        } else {
+          button.style.backgroundColor = "";
+          button.style.color = "";
+        }
+      });
+    }
+
+    // 指定したセクションをロード
+    function loadSection(sectionIdx) {
+      currentSectionIndex = sectionIdx;
+      saveToLocalStorage(CURRENT_SECTION_KEY, currentSectionIndex);
+      index = 0;
+      saveToLocalStorage(CURRENT_INDEX_KEY, index);
+      loadCurrentSectionData();
+      updateProgress();
+      showCard();
+      updateSectionButtonStyles();
+    }
+
+    // CSVファイルのインポート処理（mode: "replace" で置換、"add" で追加）
+    function importCSV(event, mode) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let csvData = e.target.result;
+        if (csvData.charCodeAt(0) === 0xFEFF) {
+          csvData = csvData.slice(1);
+        }
+        const rows = csvData.split('\n').map(row => row.trim()).filter(row => row);
+        const importedData = [];
+        rows.forEach(row => {
+          const [id, word, phonetic, partOfSpeech, meaning] = row.split(',');
+          if (id && word) {
+            importedData.push({
+              id: id.trim(),
+              word: word.trim(),
+              phonetic: phonetic ? phonetic.trim() : '',
+              partOfSpeech: partOfSpeech ? partOfSpeech.trim() : '',
+              meaning: meaning ? meaning.trim() : ''
+            });
+          }
+        });
+        if (importedData.length > 0) {
+          if (mode === "replace") {
+            sections = [importedData];
+            sectionProgress = {};
+            currentSectionIndex = 0;
+            index = 0;
+            saveToLocalStorage(SECTIONS_KEY, sections);
+            saveToLocalStorage(PROGRESS_KEY, sectionProgress);
+            saveToLocalStorage(CURRENT_SECTION_KEY, currentSectionIndex);
+            saveToLocalStorage(CURRENT_INDEX_KEY, index);
+            createSectionButtons();
+            loadCurrentSectionData();
+            updateProgress();
+            showCard();
+            alert("CSVを置換しました。");
+          } else if (mode === "add") {
+            sections.push(importedData);
+            saveToLocalStorage(SECTIONS_KEY, sections);
+            createSectionButtons();
+            alert("CSVを追加しました。");
+          }
+        } else {
+          alert("有効なデータがありません。");
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file, "UTF-8");
+    }
+
+    // アプリの初期化
+    function initializeApp() {
+      wordDisplay = document.getElementById("wordDisplay");
+      meaningDisplay = document.getElementById("meaningDisplay");
+      hintDisplay = document.getElementById("hintDisplay");
+      confirmButton = document.getElementById("confirmButton");
+      learnedButton = document.getElementById("learnedButton");
+      notLearnedButton = document.getElementById("notLearnedButton");
+      speakButton = document.getElementById("speakButton");
+      progressDisplay = document.getElementById("progress");
+      sectionContainer = document.getElementById("sections");
+      currentSectionDisplay = document.getElementById("currentSection");
+
+      loadCurrentSectionData();
+      updateProgress();
+      createSectionButtons();
+      showCard();
+
+      confirmButton.onclick = showBack;
+      learnedButton.onclick = markAsLearned;
+      notLearnedButton.onclick = nextCard;
+      speakButton.onclick = speakCurrentWord;
+      document.getElementById("importFileAdd").onchange = (e) => importCSV(e, "add");
+      document.getElementById("importFileReplace").onchange = (e) => importCSV(e, "replace");
+
+      // ハンバーガーメニューのトグル
+      document.querySelector('.hamburger-button').addEventListener('click', () => {
+        const menuContent = document.querySelector('.menu-content');
+        menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
+      });
+      document.addEventListener('click', (event) => {
+        const menu = document.querySelector('.hamburger-menu');
+        if (!menu.contains(event.target)) {
+          document.querySelector('.menu-content').style.display = 'none';
+        }
+      });
+    }
+
+    initializeApp();
+  </script>
 </body>
 </html>
