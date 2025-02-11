@@ -4,20 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>単語帳アプリ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://code.responsivevoice.org/responsivevoice.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>単語帳</h1>
-        <div id="flashcard" class="card">
-            <p id="word" class="word">読み込み中...</p>
-            <p id="pos" class="pos hidden"></p>
-            <p id="translation" class="translation hidden"></p>
-            <button id="play-audio" class="btn">🔊 発音</button>
-            <button id="show-translation" class="btn">確認</button>
-            <button id="learned" class="btn">覚えた</button>
+    <div id="header">
+        <div>
+            <button onclick="shuffleWords()">シャッフル</button>
+            <button onclick="resetList()">リセット</button>
+        </div>
+
+        <!-- ハンバーガーメニュー -->
+        <div class="hamburger-menu">
+            <button class="hamburger-button">≡</button>
+            <div class="menu-content">
+                <h3 class="menu-section-title">エクスポート</h3>
+                <button onclick="exportCSV()">全データをエクスポート</button>
+                <button onclick="exportMyWordsToCSV()">My単語帳をエクスポート</button>
+
+                <h3 class="menu-section-title">インポート</h3>
+                <button onclick="document.getElementById('importFileAdd').click()">CSVから追加</button>
+                <button onclick="document.getElementById('importFileReplace').click()">CSVで置換</button>
+                <input type="file" id="importFileAdd" accept=".csv" onchange="importCSV(event, 'add')">
+                <input type="file" id="importFileReplace" accept=".csv" onchange="importCSV(event, 'replace')">
+            </div>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <div id="progress">あと <span id="remainingCount">5</span> 語 / 合計 <span id="totalCount">5</span> 語</div>
+    <div id="currentSection">現在のセクション: <span id="sectionTitle">セクション1</span></div>
+
+    <div class="card">
+        <h2 id="wordDisplay">Loading...</h2>
+        <p id="meaningDisplay" class="hidden"></p>
+        <p id="hintDisplay" class="hidden"></p>
+    </div>
+
+    <div class="actions">
+        <button id="prevButton">前へ</button>
+        <button id="confirmButton">答えを見る</button>
+        <button id="learnedButton">覚えた</button>
+        <button id="notLearnedButton">次へ</button>
+        <button id="hintButton">ヒント</button>
+        <button id="speakButton">発音</button>
+        <button id="addToMyWordsButton">My単語帳に追加</button>
+    </div>
+
+    <div id="sections"></div>
+
+    <script src="app.js"></script>
 </body>
 </html>
