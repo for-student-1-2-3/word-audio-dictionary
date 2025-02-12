@@ -66,7 +66,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction用（guideDisplay に表示するので、カード内は通常） */
+    /* instruction用（guideDisplay に表示するためカード内は通常表示） */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -194,10 +194,10 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ表示）: 表示するのは「答え」と「発音」 -->
+    <!-- 前面（英単語のみ）の場合：「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）: 表示するのは「バッチリ！」「もう一回！」と「発音」 -->
+    <!-- 裏面（意味など）の場合：「バッチリ！」「もう一回！」「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">バッチリ！</button>
     <button id="backNextButton" onclick="nextCard()">もう一回！</button>
   </div>
@@ -216,12 +216,14 @@
     /********** ローカルストレージ操作 **********/
     const saveToLocalStorage = (key, value) =>
       localStorage.setItem(key, JSON.stringify(value));
-    const loadFromLocalStorage = (key) =>
-      JSON.parse(localStorage.getItem(key) || 'null');
+    const loadFromLocalStorage = (key) => {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
+    };
 
     /********** CSVパース処理 **********/
     // CSVの先頭部分（#単語データ行より前）を結合して「発音の仕方」（instruction）とし、
-    // #単語データ以降の各行を単語データ（ID,英単語,発音記号,品詞,意味）として処理
+    // #単語データ以降を各単語データ（ID,英単語,発音記号,品詞,意味）として処理
     function parseCSV(csvText, fileName) {
       const lines = csvText.split(/\r?\n/);
       let instructionLines = [];
@@ -316,14 +318,14 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // CSVセクションの場合は、guideDisplay に発音の仕方（instruction）を表示し、前面（英単語）を表示
+      // CSVセクションの場合は、guideDisplay に発音の仕方（instruction）を表示し、前面（英単語）を表示する
       isBackShown = false;
       updateSectionDisplay();
       updateGuideDisplay();
       showCard();
       updateActionButtons();
-      // セクションボタン押下時、最初の単語を自動発音し、進捗表示を更新
       updateProgressDisplay();
+      // セクションボタン押下時、最初の単語を自動発音する
       speakCurrentWord();
     }
     function updateSectionDisplay() {
@@ -356,7 +358,6 @@
         // 前面表示の場合：表示するのは「答え」と「発音」
         document.getElementById('confirmButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
-        document.getElementById('notLearnedButton').style.display = 'none';
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
@@ -405,7 +406,8 @@
       speakCurrentWord();
     }
 
-    /********** 「もう一回！」ボタン処理（裏面用） **********/
+    /********** 「もう一回！」処理 **********/
+    // 裏面表示時の「もう一回！」ボタンで、次の単語へ進む（自動発音）
     function nextCard() {
       if (!sections[currentSectionIndex]) return;
       const currentSection = sections[currentSectionIndex];
@@ -442,7 +444,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 「バッチリ！」を押したら次の単語を自動で発音する（次の単語へ進む処理と同様）
+      // 「バッチリ！」を押したら次の単語へ進む（自動発音）
       nextCard();
     }
 
@@ -523,12 +525,14 @@ B01002,after,ˈæfˌtər,前置詞,～のあとに（の）、～以降に
 B01003,accident,ˈæksədənt,名詞,事故、災難、偶然の出来事
 B01004,action,ˈækʃən,名詞,動作`;
 
-    if (!loadFromLocalStorage('sections')) {
+    // まず localStorage からセクション情報を読み込む
+    let savedSections = loadFromLocalStorage('sections');
+    if (!savedSections) {
       const defaultSection = parseCSV(defaultCSV, "æの音.csv");
       sections.push(defaultSection);
       saveToLocalStorage('sections', sections);
     } else {
-      sections = loadFromLocalStorage('sections');
+      sections = savedSections;
     }
     loadSection(0);
   </script>
