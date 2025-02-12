@@ -24,6 +24,60 @@
       font-size: 1.2rem;
       font-weight: 500;
     }
+    /* 進捗・セクション表示 */
+    #progress, #currentSection {
+      text-align: center;
+      margin: 10px auto;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    #currentSection {
+      font-weight: bold;
+      color: #007bff;
+    }
+    /* 発音の仕方表示欄（常に表示） */
+    #guideDisplay {
+      width: 90%;
+      max-width: 400px;
+      margin: 10px auto;
+      padding: 10px;
+      border: 1px solid #ddd;
+      background-color: #fff;
+      white-space: pre-wrap;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #333;
+    }
+    /* カード */
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 400px;
+      height: 250px;
+      margin: 10px auto;
+      padding: 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    /* 発音の仕方ページ用：改行を保持、左揃え */
+    .instruction {
+      white-space: pre-wrap;
+      text-align: left;
+    }
+    /* アクションボタン群 */
+    .actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px auto;
+    }
     button {
       padding: 10px 20px;
       margin: 5px;
@@ -46,46 +100,6 @@
     button:disabled {
       background-color: #b0c4de;
       cursor: not-allowed;
-    }
-    /* 固定サイズのカード（表・裏とも同じサイズ） */
-    .card {
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 400px;
-      height: 250px; /* 固定高さ */
-      margin: 20px auto;
-      padding: 20px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-    /* 発音の仕方ページ用：改行をそのまま反映、左揃え */
-    .instruction {
-      white-space: pre-wrap;
-      text-align: left;
-    }
-    /* アクションボタン群 */
-    .actions {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    #progress, #currentSection {
-      text-align: center;
-      margin: 20px 0;
-      font-size: 1.2rem;
-      font-weight: 500;
-    }
-    #currentSection {
-      font-weight: bold;
-      color: #007bff;
     }
     /* セクションボタン群 */
     #sections {
@@ -136,7 +150,7 @@
     .menu-content button:hover {
       background-color: #f0f8ff;
     }
-    /* ファイル入力は非表示 */
+    /* ファイル入力非表示 */
     input[type="file"] {
       display: none;
     }
@@ -149,7 +163,6 @@
       <button onclick="shuffleWords()">単語をシャッフル</button>
       <button onclick="resetSection()">リセット</button>
     </div>
-    <!-- ハンバーガーメニュー -->
     <div class="hamburger-menu">
       <button class="hamburger-button">≡</button>
       <div class="menu-content">
@@ -169,6 +182,9 @@
   <div id="progress">進捗：---</div>
   <div id="currentSection">セクション: ---</div>
 
+  <!-- 発音の仕方表示欄（常に表示） -->
+  <div id="guideDisplay"></div>
+
   <!-- カード表示部 -->
   <div class="card">
     <h2 id="wordDisplay">Loading...</h2>
@@ -178,11 +194,11 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ）表示時用 -->
+    <!-- 前面（英単語のみ）用 -->
     <button id="confirmButton" onclick="showBack()">答えを見る</button>
     <button id="notLearnedButton" onclick="nextCard()">次へ</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味・品詞・発音記号）表示時用 -->
+    <!-- 裏面（意味など）用 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた</button>
     <button id="addToMyWordsButton" onclick="addToMyWords()">My単語帳に追加</button>
   </div>
@@ -195,7 +211,7 @@
     // 各セクションは { fileName, instruction, words, originalWords, progress }
     let sections = [];
     let currentSectionIndex = null;  // 現在のセクションのインデックス
-    let isBackShown = false;           // false: 前面（英単語のみ）、true: 裏面（意味表示）
+    let isBackShown = false;           // false: 前面（英単語のみ）、true: 裏面（意味など表示）
     let currentWordIndex = 0;          // 現在の単語インデックス
 
     /********** ローカルストレージ操作 **********/
@@ -206,7 +222,7 @@
 
     /********** CSVパース処理 **********/
     // CSVの先頭部分（#単語データ行より前）を結合して「発音の仕方」（instruction）とし、
-    // #単語データ以降の各行を単語データ（ID,英単語,発音記号,品詞,意味）として処理
+    // #単語データ以降を各単語データ（ID,英単語,発音記号,品詞,意味）として処理
     function parseCSV(csvText, fileName) {
       const lines = csvText.split(/\r?\n/);
       let instructionLines = [];
@@ -237,7 +253,6 @@
           meaning: meaning.trim()
         });
       }
-      // 拡張子除去（例："æの音.csv" → "æの音"）
       const fname = fileName.replace(/\.csv$/i, '');
       return {
         fileName: fname,
@@ -279,7 +294,6 @@
 
     /********** My単語帳用処理 **********/
     function loadMyWords() {
-      // localStorage の myWords にデータがあれば、My単語帳セクションを作成または更新
       let myWords = loadFromLocalStorage('myWords') || [];
       const mySection = {
         fileName: "My単語帳",
@@ -296,7 +310,6 @@
       }
       saveToLocalStorage('sections', sections);
       createSectionButtons();
-      // 選択時は直接学習画面を表示
       currentSectionIndex = sections.findIndex(sec => sec.fileName === "My単語帳");
       currentWordIndex = 0;
       isBackShown = false;
@@ -311,7 +324,6 @@
       sectionContainer.innerHTML = '';
       sections.forEach((section, idx) => {
         const button = document.createElement('button');
-        // セクション終了（words が空の場合）は背景色を緑にし、ボタン名に「(完了)」を付与
         if (section.words.length === 0) {
           button.textContent = section.fileName + " (完了)";
           button.style.backgroundColor = 'green';
@@ -331,18 +343,19 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // セクションが My単語帳の場合は、直接単語カード表示；それ以外は instruction（ヘッダー）画面を表示
-      if (sections[currentSectionIndex].fileName === "My単語帳") {
+      // CSVセクションの場合は最初に「発音の仕方」表示欄を更新して表示
+      if (sections[currentSectionIndex].fileName !== "My単語帳") {
         isBackShown = false;
-        // 更新（myWords からデータを再取得）
-        loadMyWords();
         updateSectionDisplay();
+        updateGuideDisplay();  // guideDisplay を更新
+        showInstructionView();
+      } else {
+        // My単語帳の場合は、直接単語カード（前面）を表示
+        isBackShown = false;
+        updateSectionDisplay();
+        updateGuideDisplay();  // My単語帳の場合は空欄または固定テキスト
         showCard();
         updateActionButtons();
-      } else {
-        isBackShown = false;
-        updateSectionDisplay();
-        showInstructionView();
       }
     }
     function updateSectionDisplay() {
@@ -363,10 +376,18 @@
         progressDisplay.textContent = "進捗: ---";
       }
     }
+    // guideDisplayは、CSVセクションの場合はinstructionを表示し、My単語帳の場合は空欄にする
+    function updateGuideDisplay() {
+      const guideDisplay = document.getElementById('guideDisplay');
+      if (sections[currentSectionIndex].fileName !== "My単語帳") {
+        guideDisplay.textContent = sections[currentSectionIndex].instruction;
+      } else {
+        guideDisplay.textContent = ""; // または「My単語帳」など固定テキスト
+      }
+    }
 
     /********** アクションボタン表示更新 **********/
     function updateActionButtons() {
-      // 前面（英単語のみ表示）の場合：表示するのは「答えを見る」「次へ」「発音」
       if (!isBackShown) {
         document.getElementById('confirmButton').style.display = 'inline';
         document.getElementById('notLearnedButton').style.display = 'inline';
@@ -374,7 +395,6 @@
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('addToMyWordsButton').style.display = 'none';
       } else {
-        // 裏面（意味・品詞・発音記号表示）の場合：表示するのは「覚えた」「次へ」「発音」「My単語帳に追加」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('notLearnedButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
@@ -385,16 +405,16 @@
 
     /********** 発音の仕方ページ表示 **********/
     function showInstructionView() {
-      // instruction view：CSVヘッダー（発音の仕方）を表示する
       isBackShown = false;
       const cardTitle = document.getElementById('wordDisplay');
       const meaningDisplay = document.getElementById('meaningDisplay');
       const hintDisplay = document.getElementById('hintDisplay');
+      // instruction表示用クラスを適用
       cardTitle.className = "instruction";
       cardTitle.textContent = sections[currentSectionIndex].instruction;
       meaningDisplay.textContent = "";
       hintDisplay.textContent = "";
-      // ボタンは前面用（「答えを見る」「次へ」「発音」）
+      // 前面表示用ボタンを表示
       document.getElementById('confirmButton').style.display = 'inline';
       document.getElementById('notLearnedButton').style.display = 'inline';
       document.getElementById('speakButton').style.display = 'inline';
@@ -433,7 +453,6 @@
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 裏面表示：意味（品詞付き）と発音記号を表示
       document.getElementById('meaningDisplay').textContent =
         `【${wordObj.partOfSpeech}】 ${wordObj.meaning}`;
       document.getElementById('hintDisplay').textContent =
@@ -448,7 +467,7 @@
       const words = currentSection.words;
       if (words.length === 0) return;
       currentWordIndex = (currentWordIndex + 1) % words.length;
-      isBackShown = false; // 次の単語は前面表示に戻す
+      isBackShown = false;
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
@@ -491,14 +510,12 @@
       if (!sections[currentSectionIndex] || !isBackShown) return;
       const currentSection = sections[currentSectionIndex];
       if (currentSection.fileName === "My単語帳") {
-        // My単語帳の場合、対象単語を localStorage の myWords からも削除
         let myWords = loadFromLocalStorage('myWords') || [];
         const currentWord = currentSection.words[currentWordIndex];
         myWords = myWords.filter(word => word.id !== currentWord.id);
         saveToLocalStorage('myWords', myWords);
         currentSection.words.splice(currentWordIndex, 1);
       } else {
-        // 通常セクション：覚えた単語を progress に記録し、words から削除
         currentSection.progress.push(currentWordIndex);
         currentSection.words.splice(currentWordIndex, 1);
       }
@@ -533,14 +550,12 @@
       if (!sections[currentSectionIndex]) return;
       const currentSection = sections[currentSectionIndex];
       if (currentSection.fileName === "My単語帳") {
-        // My単語帳の場合は全データを削除
         currentSection.words = [];
         currentSection.originalWords = [];
         currentSection.progress = [];
         saveToLocalStorage('myWords', []);
         alert("My単語帳をリセットしました。");
       } else {
-        // 通常セクションは、インポート時の originalWords に戻す
         currentSection.words = currentSection.originalWords.slice();
         currentSection.progress = [];
         alert("セクションの進捗をリセットしました。");
@@ -626,11 +641,10 @@ B01004,action,ˈækʃən,名詞,動作`;
     } else {
       sections = loadFromLocalStorage('sections');
     }
-    // 初期化時、myWords にデータがある場合は My単語帳セクションを更新
+    // 初期化時、myWordsにデータがあればMy単語帳セクションを更新
     if (loadFromLocalStorage('myWords') && loadFromLocalStorage('myWords').length > 0) {
       loadMyWords();
     }
-    // 最初は、非My単語帳の場合、instruction view（発音の仕方）を表示
     loadSection(0);
   </script>
 </body>
