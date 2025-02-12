@@ -36,10 +36,11 @@
       font-weight: bold;
       color: #007bff;
     }
-    /* 発音の仕方表示欄（カードと同じ幅、角丸） */
+    /* 発音の仕方表示欄 - 単語帳と同じ幅、角丸、固定高さ */
     #guideDisplay {
       width: 90%;
       max-width: 400px;
+      height: 100px;  /* 固定高さ */
       margin: 10px auto;
       padding: 10px;
       border: 1px solid #ddd;
@@ -49,8 +50,9 @@
       text-align: left;
       font-size: 0.9rem;
       color: #333;
+      overflow: auto;
     }
-    /* カード */
+    /* カード（単語帳の領域） */
     .card {
       background-color: white;
       border-radius: 10px;
@@ -67,7 +69,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction 用 */
+    /* instruction 用（guideDisplay に表示するための設定） */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -315,7 +317,7 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // 初回起動またはリロード時、localStorageから最新のセクション情報を読み込む
+      // 初回起動またはリロード時、localStorage から最新のセクション情報を読み込む
       const storedSections = loadFromLocalStorage('sections');
       if (storedSections.length > 0) {
         sections = storedSections;
@@ -361,14 +363,14 @@
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
-        // 裏面表示：表示するのは「覚えた！」「間違えた！」「発音」
+        // 裏面表示：表示するのは「覚えた！」、「間違えた！」、「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
         document.getElementById('learnedButton').innerText = "覚えた！";
         document.getElementById('backNextButton').innerText = "間違えた！";
-        // 裏面ではボタン順序を再配置： 覚えた！→間違えた！→発音
+        // 裏面のボタン順序を再配置： 覚えた！ → 間違えた！ → 発音
         let container = document.querySelector('.actions');
         let learned = document.getElementById('learnedButton');
         let backNext = document.getElementById('backNextButton');
@@ -396,9 +398,9 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      // 表面は英単語を太字・大きく表示（上下余白 5px）
+      // 表面：英単語を太字・2em、上下余白を2pxで表示
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
+        `<div style="font-weight:bold; font-size:2em; margin:2px 0;">${wordObj.word}</div>`;
       document.getElementById('meaningDisplay').textContent = "";
       document.getElementById('hintDisplay').textContent = "";
     }
@@ -411,16 +413,16 @@
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 裏面：英単語（前面と同じ太字・大きさ、上下余白 5px）
+      // 裏面：英単語を同じ大きさで表示（余白2px）
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
-      // 意味の上に、固定幅で水平線（幅:100%）、上下余白固定（15px）
+        `<div style="font-weight:bold; font-size:2em; margin:2px 0;">${wordObj.word}</div>`;
+      // 罫線：固定幅200px、上下余白20px
       document.getElementById('meaningDisplay').innerHTML =
-        `<hr style="width:100%; margin:15px 0;">` +
-        `<div style="text-align:left; width:100%; margin:10px 0;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
-      // 発音記号：左端から表示（幅:100%、余白10px）
+        `<hr style="width:200px; margin:20px 0;">` +
+        `<div style="text-align:left; width:100%; margin:20px 0;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      // 発音記号：左端から表示（余白上下20px）
       document.getElementById('hintDisplay').innerHTML =
-        `<div style="text-align:left; width:100%; margin:10px 0;">/ ${wordObj.phonetic} /</div>`;
+        `<div style="text-align:left; width:100%; margin:20px 0;">/ ${wordObj.phonetic} /</div>`;
       speakCurrentWord();
     }
 
@@ -461,7 +463,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後は前面表示に戻して、次の単語をその位置で表示・発音
+      // 覚えた後はそのまま前面表示に戻して、次の単語を表示・発音する
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
