@@ -197,9 +197,9 @@
     <!-- 前面（英単語のみ表示）: 「答え」「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）: 「覚えた」「わからない」「発音」 -->
-    <button id="learnedButton" onclick="markAsLearned()">覚えた</button>
-    <button id="notLearnedButton" onclick="nextCard()">わからない</button>
+    <!-- 裏面（意味など表示）: 「バッチリ！」「もう一回！」「発音」 -->
+    <button id="learnedButton" onclick="markAsLearned()">バッチリ！</button>
+    <button id="notLearnedButton" onclick="nextCard()">もう一回！</button>
   </div>
 
   <!-- セクション切り替えボタン -->
@@ -360,13 +360,13 @@
         document.getElementById('notLearnedButton').style.display = 'none';
         document.getElementById('learnedButton').style.display = 'none';
       } else {
-        // 裏面表示の場合：表示するのは「覚えた」「わからない」「発音」
+        // 裏面表示の場合：表示するのは「バッチリ！」「もう一回！」「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('notLearnedButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
-        // ボタンラベルの設定：notLearnedButton を「わからない」に変更
-        document.getElementById('notLearnedButton').innerText = "わからない";
+        // ボタンラベルの設定：notLearnedButton を「もう一回！」に変更
+        document.getElementById('notLearnedButton').innerText = "もう一回！";
       }
     }
 
@@ -407,7 +407,7 @@
       speakCurrentWord();
     }
 
-    /********** 「わからない」ボタン（裏面用）で次の単語へ **********/
+    /********** 「もう一回！」ボタン（裏面用）で次の単語へ **********/
     function nextCard() {
       if (!sections[currentSectionIndex]) return;
       const currentSection = sections[currentSectionIndex];
@@ -434,11 +434,11 @@
       });
     }
 
-    /********** 覚えた処理 **********/
+    /********** バッチリ！処理 **********/
     function markAsLearned() {
       if (!sections[currentSectionIndex] || !isBackShown) return;
       const currentSection = sections[currentSectionIndex];
-      // 覚えた単語は progress に記録し、words から削除
+      // バッチリ！単語は progress に記録し、words から削除
       currentSection.progress.push(currentWordIndex);
       currentSection.words.splice(currentWordIndex, 1);
       if (currentWordIndex >= currentSection.words.length) {
