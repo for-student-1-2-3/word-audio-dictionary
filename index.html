@@ -66,7 +66,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction用：guideDisplayに表示するため、カード内は通常表示 */
+    /* instruction用（guideDisplay に表示するので、カード内は通常） */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -194,11 +194,10 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ表示）用 -->
+    <!-- 前面（英単語のみ表示）: 表示するのは「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
-    <button id="frontNextButton" onclick="nextCard()">次へ</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）用 -->
+    <!-- 裏面（意味など表示）: 表示するのは「バッチリ！」「もう一回！」と「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">バッチリ！</button>
     <button id="backNextButton" onclick="nextCard()">もう一回！</button>
   </div>
@@ -211,7 +210,7 @@
     // 各セクションは { fileName, instruction, words, originalWords, progress }
     let sections = [];
     let currentSectionIndex = null;  // 現在のセクションのインデックス
-    let isBackShown = false;           // false: 前面（英単語のみ）、true: 裏面（意味など表示）
+    let isBackShown = false;           // false: 前面（英単語のみ）、true: 裏面（意味・品詞・発音記号表示）
     let currentWordIndex = 0;          // 現在の単語インデックス
 
     /********** ローカルストレージ操作 **********/
@@ -222,7 +221,7 @@
 
     /********** CSVパース処理 **********/
     // CSVの先頭部分（#単語データ行より前）を結合して「発音の仕方」（instruction）とし、
-    // #単語データ以降を各単語データ（ID,英単語,発音記号,品詞,意味）として処理
+    // #単語データ以降の各行を単語データ（ID,英単語,発音記号,品詞,意味）として処理
     function parseCSV(csvText, fileName) {
       const lines = csvText.split(/\r?\n/);
       let instructionLines = [];
@@ -317,13 +316,14 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // CSVセクションの場合は、guideDisplay に発音の仕方（instruction）を表示し、前面を表示
+      // CSVセクションの場合は、guideDisplay に発音の仕方（instruction）を表示し、前面（英単語）を表示
       isBackShown = false;
       updateSectionDisplay();
       updateGuideDisplay();
       showCard();
       updateActionButtons();
-      // セクション選択時、最初の単語を自動発音する
+      // セクションボタン押下時、最初の単語を自動発音し、進捗表示を更新
+      updateProgressDisplay();
       speakCurrentWord();
     }
     function updateSectionDisplay() {
@@ -344,7 +344,7 @@
         progressDisplay.textContent = "進捗: ---";
       }
     }
-    // guideDisplayは、CSVセクションの場合に instruction を表示
+    // guideDisplay は CSVセクションの場合に instruction を表示
     function updateGuideDisplay() {
       const guideDisplay = document.getElementById('guideDisplay');
       guideDisplay.textContent = sections[currentSectionIndex].instruction;
@@ -353,19 +353,18 @@
     /********** アクションボタン表示更新 **********/
     function updateActionButtons() {
       if (!isBackShown) {
-        // 前面表示（英単語のみ）の場合：表示するのは「答え」「次へ」「発音」
+        // 前面表示の場合：表示するのは「答え」と「発音」
         document.getElementById('confirmButton').style.display = 'inline';
-        document.getElementById('frontNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
+        document.getElementById('notLearnedButton').style.display = 'none';
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
-        // 裏面表示の場合：表示するのは「バッチリ！」「もう一回！」「発音」
+        // 裏面表示の場合：表示するのは「バッチリ！」「もう一回！」と「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
-        document.getElementById('frontNextButton').style.display = 'none';
       }
     }
 
@@ -406,7 +405,7 @@
       speakCurrentWord();
     }
 
-    /********** 次の単語 **********/
+    /********** 「もう一回！」ボタン処理（裏面用） **********/
     function nextCard() {
       if (!sections[currentSectionIndex]) return;
       const currentSection = sections[currentSectionIndex];
@@ -433,7 +432,7 @@
       });
     }
 
-    /********** バッチリ！処理 **********/
+    /********** 「バッチリ！」処理 **********/
     function markAsLearned() {
       if (!sections[currentSectionIndex] || !isBackShown) return;
       const currentSection = sections[currentSectionIndex];
@@ -443,13 +442,9 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 「バッチリ！」を押したら、次の単語を自動発音する
+      // 「バッチリ！」を押したら次の単語を自動で発音する（次の単語へ進む処理と同様）
       nextCard();
     }
-
-    /********** 「もう一回！」処理 **********/
-    // 「もう一回！」は、裏面表示時に次の単語へ進む処理と同じ
-    // nextCard() を呼び出す
 
     /********** シャッフル **********/
     function shuffleWords() {
