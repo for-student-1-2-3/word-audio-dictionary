@@ -66,7 +66,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction 用（guideDisplayに表示するので、カード内は通常表示） */
+    /* instruction 用（guideDisplayに表示するため、カード内は通常表示） */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -207,16 +207,13 @@
 
   <script>
     /********** グローバル変数 **********/
-    // 各セクションは { fileName, instruction, words, originalWords, progress }
-    let sections = [];
-    let currentSectionIndex = null;  // 現在のセクションのインデックス
-    let isBackShown = false;           // false: 前面（英単語のみ）、true: 裏面（意味表示）
-    let currentWordIndex = 0;          // 現在の単語インデックス
+    let sections = []; // 各セクションは { fileName, instruction, words, originalWords, progress }
+    let currentSectionIndex = null;
+    let isBackShown = false; // false: 前面（英単語のみ）、true: 裏面（意味表示）
+    let currentWordIndex = 0;
 
     /********** ローカルストレージ操作 **********/
-    const saveToLocalStorage = (key, value) =>
-      localStorage.setItem(key, JSON.stringify(value));
-    // "sections" が保存されていない場合は空の配列を返す
+    const saveToLocalStorage = (key, value) => localStorage.setItem(key, JSON.stringify(value));
     const loadFromLocalStorage = (key) => {
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : [];
@@ -390,7 +387,8 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      document.getElementById('wordDisplay').textContent = wordObj.word;
+      // 表面でも英単語を大きく太字で表示する
+      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em;">${wordObj.word}</div>`;
       document.getElementById('meaningDisplay').textContent = "";
       document.getElementById('hintDisplay').textContent = "";
     }
@@ -403,15 +401,13 @@
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 裏面のデザイン：
-      // 英単語：太字・大きく表示
-      // 水平線、次に左揃えで【品詞】意味、その下に / 発音記号 /、さらに水平線
-      document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em;">${wordObj.word}</div>`;
-      document.getElementById('meaningDisplay').innerHTML =
-        `<hr><div style="margin-left:10px;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
-      document.getElementById('hintDisplay').innerHTML =
-        `<div style="margin-left:10px;">/ ${wordObj.phonetic} /</div><hr>`;
+      // 裏面では、上部に英単語（前面と同じ大きさ）を表示
+      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em;">${wordObj.word}</div>`;
+      // 固定長の水平線（幅200px）を意味の上に表示
+      document.getElementById('meaningDisplay').innerHTML = `<hr style="width:200px; margin:10px auto;">` +
+        `<div style="text-align:left; margin-left:10px;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      // 発音記号は左揃え、下の水平線は削除
+      document.getElementById('hintDisplay').innerHTML = `<div style="text-align:left; margin-left:10px;">/ ${wordObj.phonetic} /</div>`;
       speakCurrentWord();
     }
 
@@ -452,7 +448,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後はそのまま前面表示で更新（次の単語がその位置に来る）
+      // 覚えた後はそのまま前面表示に戻して次の単語を表示・発音
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
@@ -527,7 +523,6 @@
     });
 
     /********** 初期化 **********/
-    // 初回起動またはリロード時、localStorage の "sections" を読み込む
     const storedSections = loadFromLocalStorage('sections');
     if (storedSections && storedSections.length > 0) {
       sections = storedSections;
