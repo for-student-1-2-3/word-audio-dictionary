@@ -14,6 +14,7 @@
       background-color: #f4f6f9;
       color: #333;
     }
+    /* ヘッダー */
     #header {
       display: flex;
       justify-content: space-between;
@@ -52,7 +53,7 @@
     .card {
       background-color: white;
       border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       width: 90%;
       max-width: 400px;
       height: 250px;
@@ -65,7 +66,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* 発音の仕方ページ用：改行を保持、左揃え */
+    /* instruction用：guideDisplayに表示するため、カード内は通常表示 */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -128,7 +129,7 @@
       right: 0;
       top: 50px;
       background-color: white;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
       border-radius: 6px;
       min-width: 250px;
       z-index: 1;
@@ -181,7 +182,7 @@
   <div id="progress">進捗：---</div>
   <div id="currentSection">セクション: ---</div>
 
-  <!-- 発音の仕方表示欄（常に表示） -->
+  <!-- 発音の仕方表示欄 -->
   <div id="guideDisplay"></div>
 
   <!-- カード表示部 -->
@@ -193,12 +194,12 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ表示）用：表示するのは「答えを見る」「次へ」「発音」 -->
-    <button id="confirmButton" onclick="showBack()">答えを見る</button>
-    <button id="notLearnedButton" onclick="nextCard()">次へ</button>
+    <!-- 前面（英単語のみ表示）: 「答え」「発音」 -->
+    <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）用：表示するのは「覚えた」「次へ」「発音」 -->
+    <!-- 裏面（意味など表示）: 「覚えた」「わからない」「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた</button>
+    <button id="notLearnedButton" onclick="nextCard()">わからない</button>
   </div>
 
   <!-- セクション切り替えボタン -->
@@ -220,7 +221,7 @@
 
     /********** CSVパース処理 **********/
     // CSVの先頭部分（#単語データ行より前）を結合して「発音の仕方」（instruction）とし、
-    // #単語データ以降を各単語データ（ID,英単語,発音記号,品詞,意味）として処理
+    // #単語データ以降の各行を単語データ（ID,英単語,発音記号,品詞,意味）として処理
     function parseCSV(csvText, fileName) {
       const lines = csvText.split(/\r?\n/);
       let instructionLines = [];
@@ -285,6 +286,7 @@
         createSectionButtons();
         alert("CSVデータをインポートしました。");
         loadSection(sections.length - 1);
+        // セクションボタン押下時は、最初の単語の表面表示後、自動発音
         event.target.value = "";
       };
       reader.readAsText(file, 'UTF-8');
@@ -296,6 +298,7 @@
       sectionContainer.innerHTML = '';
       sections.forEach((section, idx) => {
         const button = document.createElement('button');
+        // セクション終了（wordsが空の場合）は背景色を緑にし、ボタン名に「(完了)」を付与
         if (section.words.length === 0) {
           button.textContent = section.fileName + " (完了)";
           button.style.backgroundColor = 'green';
@@ -315,12 +318,14 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // CSVセクションの場合は、まず guideDisplay に発音の仕方（instruction）を表示し、前面（英単語）を表示する
+      // CSVセクションの場合は、guideDisplay に発音の仕方（instruction）を表示
       isBackShown = false;
       updateSectionDisplay();
       updateGuideDisplay();
       showCard();
       updateActionButtons();
+      // さらに、セクション選択時、はじめの単語を自動発音する
+      speakCurrentWord();
     }
     function updateSectionDisplay() {
       const currentSectionDisplay = document.getElementById('currentSection');
@@ -340,7 +345,7 @@
         progressDisplay.textContent = "進捗: ---";
       }
     }
-    // guideDisplayはCSVセクションの場合に instruction を表示
+    // guideDisplayは、CSVセクションの場合に instruction を表示
     function updateGuideDisplay() {
       const guideDisplay = document.getElementById('guideDisplay');
       guideDisplay.textContent = sections[currentSectionIndex].instruction;
@@ -349,17 +354,19 @@
     /********** アクションボタン表示更新 **********/
     function updateActionButtons() {
       if (!isBackShown) {
-        // 前面表示の場合：表示するのは「答えを見る」「次へ」「発音」
+        // 前面表示の場合：表示するのは「答え」と「発音」
         document.getElementById('confirmButton').style.display = 'inline';
-        document.getElementById('notLearnedButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
+        document.getElementById('notLearnedButton').style.display = 'none';
         document.getElementById('learnedButton').style.display = 'none';
       } else {
-        // 裏面表示の場合：表示するのは「覚えた」「次へ」「発音」
+        // 裏面表示の場合：表示するのは「覚えた」「わからない」「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('notLearnedButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
+        // ボタンラベルの設定：notLearnedButton を「わからない」に変更
+        document.getElementById('notLearnedButton').innerText = "わからない";
       }
     }
 
@@ -400,7 +407,7 @@
       speakCurrentWord();
     }
 
-    /********** 次の単語 **********/
+    /********** 「わからない」ボタン（裏面用）で次の単語へ **********/
     function nextCard() {
       if (!sections[currentSectionIndex]) return;
       const currentSection = sections[currentSectionIndex];
@@ -431,7 +438,7 @@
     function markAsLearned() {
       if (!sections[currentSectionIndex] || !isBackShown) return;
       const currentSection = sections[currentSectionIndex];
-      // どのセクションでも、覚えた単語は progress に記録し、words から削除
+      // 覚えた単語は progress に記録し、words から削除
       currentSection.progress.push(currentWordIndex);
       currentSection.words.splice(currentWordIndex, 1);
       if (currentWordIndex >= currentSection.words.length) {
@@ -469,7 +476,6 @@
       // CSVセクションの場合は originalWords に戻す
       currentSection.words = currentSection.originalWords.slice();
       currentSection.progress = [];
-      // リセット時は localStorage にも保存
       saveToLocalStorage('sections', sections);
       alert("セクションの進捗をリセットしました。");
       currentWordIndex = 0;
@@ -513,7 +519,6 @@
     });
 
     /********** 初期化 **********/
-    // 初期CSV（サンプル）
     const defaultCSV = `æ	
 ェア	
 「あ」に「え」が加わった長めの音	
