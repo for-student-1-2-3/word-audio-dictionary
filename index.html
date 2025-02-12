@@ -409,16 +409,21 @@
       const words = currentSection.words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 英単語：同じ大きさ、太字、上下余白2px、左詰め
+      
+      // 英単語：中央揃え、表面と同じ文字サイズ (2em)
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:left; width:100%;">${wordObj.word}</div>`;
-      // 発音記号：英単語の下に中央表示
+        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
+      
+      // 発音記号：中央揃え、英単語より少し小さい文字サイズ (1.8em)
       document.getElementById('hintDisplay').innerHTML =
-        `<div style="font-size:1.2em; margin:2px 0; text-align:center; width:100%;">/ ${wordObj.phonetic} /</div>`;
-      // 水平線：カード領域いっぱいに固定（width:100%）で表示、上下余白20px
+        `<div style="font-size:1.8em; margin:2px 0; text-align:center; width:100%;">/ ${wordObj.phonetic} /</div>`;
+      
+      // 罫線（横線）
       let hrHTML = `<hr style="width:100%; margin:20px 0;">`;
-      // 意味：左詰め、幅100%、上下余白20px（余白は固定）、領域の左端から表示
+      
+      // 品詞、意味：左揃え
       let meaningHTML = `<div style="text-align:left; width:100%; margin:20px 0;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      
       document.getElementById('meaningDisplay').innerHTML = hrHTML + meaningHTML;
       speakCurrentWord();
     }
