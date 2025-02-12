@@ -26,6 +26,7 @@
     }
     button {
       padding: 10px 20px;
+      margin: 5px;
       border: none;
       background-color: #007bff;
       color: white;
@@ -34,7 +35,6 @@
       font-size: 1rem;
       font-weight: 500;
       transition: background-color 0.3s ease, transform 0.2s ease;
-      margin: 5px;
     }
     button:hover {
       background-color: #0056b3;
@@ -196,8 +196,8 @@
     /********** グローバル変数 **********/
     // 各セクションはオブジェクト { fileName, instruction, words, originalWords, progress }
     let sections = [];
-    let currentSectionIndex = null;  // 現在のセクションのインデックス（数値または "myWords"）
-    let isInstructionView = true;      // 発音の仕方ページを表示中かどうか
+    let currentSectionIndex = null;  // 現在のセクションのインデックス
+    let isInstructionView = true;      // 発音の仕方ページ表示中かどうか
     let currentWordIndex = 0;          // 単語帳表示時の現在の単語インデックス
 
     /********** ローカルストレージ操作 **********/
@@ -221,7 +221,7 @@
           instructionLines.push(line);
         }
       }
-      // instruction部分：改行を保持して左揃えで表示するため、そのまま結合
+      // instruction部分：改行を保持して左揃えで表示するためそのまま結合
       let instruction = instructionLines.join("\n");
       let words = [];
       for (let i = dataStartIndex; i < lines.length; i++) {
@@ -289,6 +289,7 @@
         originalWords: myWords.slice(),
         progress: []
       };
+      // すでに存在している場合は上書き、なければ追加
       const myIndex = sections.findIndex(sec => sec.fileName === "My単語帳");
       if (myIndex !== -1) {
         sections[myIndex] = mySection;
@@ -467,7 +468,7 @@
       saveToLocalStorage('sections', sections);
       showCard();
       updateProgressDisplay();
-      // セクションが終了していれば、セクションボタンの色を更新
+      // セクション終了時はセクションボタンの色更新
       createSectionButtons();
     }
 
@@ -503,8 +504,8 @@
     function resetSection() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const currentSection = sections[currentSectionIndex];
-      // My単語帳の場合は、リセットすると空にする
       if (currentSection.fileName === "My単語帳") {
+        // My単語帳の場合はリセットすると完全に空にする
         currentSection.words = [];
         currentSection.originalWords = [];
         currentSection.progress = [];
@@ -608,6 +609,10 @@ B01004,action,ˈækʃən,名詞,動作`;
       saveToLocalStorage('sections', sections);
     } else {
       sections = loadFromLocalStorage('sections');
+    }
+    // ここで、localStorage の myWords にデータがあれば My単語帳セクションを更新
+    if (loadFromLocalStorage('myWords') && loadFromLocalStorage('myWords').length > 0) {
+      loadMyWords();
     }
     loadSection(0);
   </script>
