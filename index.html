@@ -36,7 +36,7 @@
       font-weight: bold;
       color: #007bff;
     }
-    /* 発音の仕方表示欄 */
+    /* 発音の仕方表示欄（カードと同じ幅、角丸） */
     #guideDisplay {
       width: 90%;
       max-width: 400px;
@@ -67,7 +67,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction 用（guideDisplayに表示するため、カード内は通常表示） */
+    /* instruction 用 */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -195,10 +195,10 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ表示）：表示するのは「答え」と「発音」 -->
+    <!-- 前面（英単語のみ表示）：「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）：表示するのは「覚えた！」「間違えた！」「発音」 -->
+    <!-- 裏面（意味など表示）：「覚えた！」「間違えた！」「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -368,7 +368,7 @@
         document.getElementById('confirmButton').style.display = 'none';
         document.getElementById('learnedButton').innerText = "覚えた！";
         document.getElementById('backNextButton').innerText = "間違えた！";
-        // 裏面のボタン順序を「覚えた！」「間違えた！」「発音」に再配置
+        // 裏面ではボタン順序を再配置： 覚えた！→間違えた！→発音
         let container = document.querySelector('.actions');
         let learned = document.getElementById('learnedButton');
         let backNext = document.getElementById('backNextButton');
@@ -396,7 +396,7 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      // 表面は英単語を太字・大きく、上下余白を少なめに
+      // 表面は英単語を太字・大きく表示（上下余白 5px）
       document.getElementById('wordDisplay').innerHTML =
         `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
       document.getElementById('meaningDisplay').textContent = "";
@@ -411,21 +411,20 @@
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 英単語は表面と同じ太字・大きさで、上下余白を小さめに
+      // 裏面：英単語（前面と同じ太字・大きさ、上下余白 5px）
       document.getElementById('wordDisplay').innerHTML =
         `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
-      // 意味の上の水平線：領域ぎりぎりまで伸ばす（幅100%）、固定幅として表示
-      // 余白（上下15px）を増やす
+      // 意味の上に、固定幅で水平線（幅:100%）、上下余白固定（15px）
       document.getElementById('meaningDisplay').innerHTML =
         `<hr style="width:100%; margin:15px 0;">` +
-        `<div style="text-align:left; width:100%; margin-left:10px; text-indent:1em;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
-      // 発音記号：左詰めで、一字分（1em）のインデントを入れる。下の水平線は削除。
+        `<div style="text-align:left; width:100%; margin:10px 0;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      // 発音記号：左端から表示（幅:100%、余白10px）
       document.getElementById('hintDisplay').innerHTML =
-        `<div style="text-align:left; width:100%; margin-left:10px; text-indent:1em;">/ ${wordObj.phonetic} /</div>`;
+        `<div style="text-align:left; width:100%; margin:10px 0;">/ ${wordObj.phonetic} /</div>`;
       speakCurrentWord();
     }
 
-    /********** 「間違えた！」ボタン処理（裏面用） **********/
+    /********** 「間違えた！」ボタン処理 **********/
     function nextCard() {
       if (!sections[currentSectionIndex]) return;
       const currentSection = sections[currentSectionIndex];
@@ -462,7 +461,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後はそのまま前面表示で更新（次の単語がその位置に来る）
+      // 覚えた後は前面表示に戻して、次の単語をその位置で表示・発音
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
