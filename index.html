@@ -153,6 +153,32 @@
     input[type="file"] {
       display: none;
     }
+    /* 裏面表示用スタイル */
+    .back-word {
+      font-weight: bold;
+      font-size: 2em;
+      margin: 10px 0;
+      text-align: center;
+      width: 100%;
+    }
+    .back-phonetic {
+      font-size: 1.6em;
+      margin: 5px 0;
+      text-align: center;
+      width: 100%;
+    }
+    .back-hr {
+      width: 100%;
+      border: none;
+      border-top: 1px solid #ccc;
+      margin: 20px 0;
+    }
+    .back-meaning {
+      text-align: left;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
@@ -186,8 +212,8 @@
   <!-- カード表示部 -->
   <div class="card">
     <h2 id="wordDisplay">Loading...</h2>
-    <p id="meaningDisplay"></p>
     <p id="hintDisplay"></p>
+    <p id="meaningDisplay"></p>
   </div>
 
   <!-- アクションボタン群 -->
@@ -195,7 +221,7 @@
     <!-- 前面（英単語のみ表示）：「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）：「覚えた！」「間違えた！」「発音」 -->
+    <!-- 裏面（意味など表示）：「覚えた！」「間違えた！」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -385,8 +411,8 @@
       const words = currentSection.words;
       if (words.length === 0) {
         document.getElementById('wordDisplay').textContent = "Good Job!";
-        document.getElementById('meaningDisplay').textContent = "";
         document.getElementById('hintDisplay').textContent = "";
+        document.getElementById('meaningDisplay').textContent = "";
         return;
       }
       if (currentWordIndex < 0 || currentWordIndex >= words.length) {
@@ -396,8 +422,8 @@
       // 表面：英単語を太字・2em、上下余白2px、中央寄せ
       document.getElementById('wordDisplay').innerHTML =
         `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
-      document.getElementById('meaningDisplay').textContent = "";
       document.getElementById('hintDisplay').textContent = "";
+      document.getElementById('meaningDisplay').textContent = "";
     }
 
     /********** 裏面表示（答え） **********/
@@ -411,19 +437,19 @@
       const wordObj = words[currentWordIndex];
       
       // 英単語：中央揃え、表面と同じ文字サイズ (2em)
-      document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
+      const wordHTML = `<div class="back-word">${wordObj.word}</div>`;
       
-      // 発音記号：中央揃え、英単語より少し小さい文字サイズ (1.8em)
-      document.getElementById('hintDisplay').innerHTML =
-        `<div style="font-size:1.8em; margin:2px 0; text-align:center; width:100%;">/ ${wordObj.phonetic} /</div>`;
+      // 発音記号：中央揃え、英単語より少し小さい文字サイズ (1.6em)
+      const phoneticHTML = `<div class="back-phonetic">/ ${wordObj.phonetic} /</div>`;
       
-      // 罫線（横線）
-      let hrHTML = `<hr style="width:100%; margin:20px 0;">`;
+      // 罫線（横線）：カード全体の幅に固定
+      const hrHTML = `<hr class="back-hr">`;
       
       // 品詞、意味：左揃え
-      let meaningHTML = `<div style="text-align:left; width:100%; margin:20px 0;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      const meaningHTML = `<div class="back-meaning">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
       
+      document.getElementById('wordDisplay').innerHTML = wordHTML;
+      document.getElementById('hintDisplay').innerHTML = phoneticHTML;
       document.getElementById('meaningDisplay').innerHTML = hrHTML + meaningHTML;
       speakCurrentWord();
     }
