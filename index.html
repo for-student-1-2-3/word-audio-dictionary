@@ -36,13 +36,14 @@
       font-weight: bold;
       color: #007bff;
     }
-    /* 発音の仕方表示欄（常に表示） */
+    /* 発音の仕方表示欄 */
     #guideDisplay {
       width: 90%;
       max-width: 400px;
       margin: 10px auto;
       padding: 10px;
       border: 1px solid #ddd;
+      border-radius: 10px;
       background-color: #fff;
       white-space: pre-wrap;
       text-align: left;
@@ -66,7 +67,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction 用（guideDisplayに表示するため、カード内は通常表示） */
+    /* instruction 用（guideDisplayに表示するので、カード内は通常表示） */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -365,8 +366,17 @@
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
+        // 両ボタンのラベルを更新
         document.getElementById('learnedButton').innerText = "覚えた！";
         document.getElementById('backNextButton').innerText = "間違えた！";
+        // 裏面ではボタンの表示順序を再配置： 覚えた！ → 間違えた！ → 発音
+        let container = document.querySelector('.actions');
+        let learned = document.getElementById('learnedButton');
+        let backNext = document.getElementById('backNextButton');
+        let speak = document.getElementById('speakButton');
+        container.appendChild(learned);
+        container.appendChild(backNext);
+        container.appendChild(speak);
       }
     }
 
@@ -387,8 +397,8 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      // 表面でも英単語を大きく太字で表示する
-      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em;">${wordObj.word}</div>`;
+      // 表面は英単語を太字・大きく表示（上下余白を小さめ）
+      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
       document.getElementById('meaningDisplay').textContent = "";
       document.getElementById('hintDisplay').textContent = "";
     }
@@ -401,13 +411,13 @@
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 裏面では、上部に英単語（前面と同じ大きさ）を表示
-      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em;">${wordObj.word}</div>`;
-      // 固定長の水平線（幅200px）を意味の上に表示
-      document.getElementById('meaningDisplay').innerHTML = `<hr style="width:200px; margin:10px auto;">` +
-        `<div style="text-align:left; margin-left:10px;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
-      // 発音記号は左揃え、下の水平線は削除
-      document.getElementById('hintDisplay').innerHTML = `<div style="text-align:left; margin-left:10px;">/ ${wordObj.phonetic} /</div>`;
+      // 英単語（同じ大きさ、太字、上下余白小）
+      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
+      // 意味の上に一定幅の水平線（90%）
+      document.getElementById('meaningDisplay').innerHTML = `<hr style="width:90%; margin:10px auto;">` +
+         `<div style="text-align:left; width:90%; margin:10px auto;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      // 発音記号（左揃え、水平線は削除）
+      document.getElementById('hintDisplay').innerHTML = `<div style="text-align:left; width:90%; margin:10px auto;">/ ${wordObj.phonetic} /</div>`;
       speakCurrentWord();
     }
 
@@ -448,7 +458,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後はそのまま前面表示に戻して次の単語を表示・発音
+      // 覚えた後はそのまま前面表示に戻して現在の単語（次の単語）を表示・発音
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
