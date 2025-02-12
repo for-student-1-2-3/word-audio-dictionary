@@ -157,13 +157,13 @@
     .back-word {
       font-weight: bold;
       font-size: 2em;
-      margin: 10px 0;
+      margin: 10px 0; /* 中 */
       text-align: center;
       width: 100%;
     }
     .back-phonetic {
       font-size: 1.6em;
-      margin: 5px 0;
+      margin: 5px 0; /* 小 */
       text-align: center;
       width: 100%;
     }
@@ -171,12 +171,12 @@
       width: 100%;
       border: none;
       border-top: 1px solid #ccc;
-      margin: 20px 0;
+      margin: 10px 0; /* 中 */
     }
     .back-meaning {
       text-align: left;
       width: 100%;
-      margin: 0;
+      margin: 10px 0; /* 中 */
       padding: 0;
     }
   </style>
@@ -436,16 +436,16 @@
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
       
-      // 英単語：中央揃え、表面と同じ文字サイズ (2em)
+      // 英単語：中央揃え、表面と同じ文字サイズ (2em)・余白：中
       const wordHTML = `<div class="back-word">${wordObj.word}</div>`;
       
-      // 発音記号：中央揃え、英単語より少し小さい文字サイズ (1.6em)
+      // 発音記号：中央揃え、英単語より少し小さい文字サイズ (1.6em)・余白：小
       const phoneticHTML = `<div class="back-phonetic">/ ${wordObj.phonetic} /</div>`;
       
-      // 罫線（横線）：カード全体の幅に固定
+      // 罫線：カード全体の幅に固定・余白：中
       const hrHTML = `<hr class="back-hr">`;
       
-      // 品詞、意味：左揃え
+      // 品詞、意味：左揃え・余白：中
       const meaningHTML = `<div class="back-meaning">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
       
       document.getElementById('wordDisplay').innerHTML = wordHTML;
