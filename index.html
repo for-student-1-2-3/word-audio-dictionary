@@ -34,6 +34,7 @@
       font-size: 1rem;
       font-weight: 500;
       transition: background-color 0.3s ease, transform 0.2s ease;
+      margin: 5px;
     }
     button:hover {
       background-color: #0056b3;
@@ -63,7 +64,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* 発音の仕方ページ用：改行をそのまま反映 */
+    /* 発音の仕方ページ用：改行をそのまま反映、左揃え */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -72,9 +73,9 @@
     .actions {
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
       gap: 10px;
       margin-top: 20px;
-      flex-wrap: wrap;
     }
     #progress, #currentSection {
       text-align: center;
@@ -145,14 +146,14 @@
   <!-- ヘッダー -->
   <div id="header">
     <div>
-      <button onclick="shuffleWords()">シャッフル</button>
+      <button onclick="shuffleWords()">単語をシャッフル</button>
       <button onclick="resetSection()">リセット</button>
     </div>
     <!-- ハンバーガーメニュー -->
     <div class="hamburger-menu">
       <button class="hamburger-button">≡</button>
       <div class="menu-content">
-        <button onclick="exportCSV()">全データをエクスポート</button>
+        <button onclick="exportCSV()">全セクションをエクスポート</button>
         <button onclick="exportMyWordsToCSV()">My単語帳をエクスポート</button>
         <button onclick="document.getElementById('importFileAdd').click()">CSVから追加</button>
         <button onclick="document.getElementById('importFileReplace').click()">CSVで置換</button>
@@ -220,7 +221,7 @@
           instructionLines.push(line);
         }
       }
-      // instruction部分：改行を保持するためにそのまま結合
+      // instruction部分：改行を保持して左揃えで表示するため、そのまま結合
       let instruction = instructionLines.join("\n");
       let words = [];
       for (let i = dataStartIndex; i < lines.length; i++) {
@@ -237,15 +238,14 @@
           meaning: meaning.trim()
         });
       }
-      // 拡張子除去：例えば "æの音.csv" → "æの音"
+      // 拡張子除去：例 "æの音.csv" → "æの音"
       const fname = fileName.replace(/\.csv$/i, '');
       return {
         fileName: fname,
         instruction: instruction,
         words: words,
-        // オリジナルの単語群を保持しておく
         originalWords: words.slice(),
-        progress: []  // 覚えた単語のインデックス等（今回は削除件数として利用）
+        progress: []
       };
     }
 
@@ -280,16 +280,15 @@
 
     /********** My単語帳用処理 **********/
     function loadMyWords() {
-      // myWords セクションを作成
+      // myWords セクションを作成または更新
       let myWords = loadFromLocalStorage('myWords') || [];
       const mySection = {
         fileName: "My単語帳",
         instruction: "My単語帳",
-        words: myWords.slice(), // myWordsからコピー
+        words: myWords.slice(),
         originalWords: myWords.slice(),
         progress: []
       };
-      // myWordsセクションを最終項目に追加（すでにあれば上書き）
       const myIndex = sections.findIndex(sec => sec.fileName === "My単語帳");
       if (myIndex !== -1) {
         sections[myIndex] = mySection;
@@ -302,7 +301,7 @@
       isInstructionView = true;
       currentWordIndex = 0;
       updateSectionDisplay();
-      showInstructionView(); // 最初は発音の仕方ページ（ここではシンプルに "My単語帳" と表示）
+      showInstructionView();
     }
 
     /********** セクションボタン生成 **********/
@@ -311,28 +310,19 @@
       sectionContainer.innerHTML = '';
       sections.forEach((section, idx) => {
         const button = document.createElement('button');
-        button.textContent = section.fileName;
-        // セクション終了（words が空の場合）はボタン色を緑に
+        // セクション終了（words が空の場合）はボタン色を緑にし、ボタン名に「(完了)」を付与
         if (section.words.length === 0) {
+          button.textContent = section.fileName + " (完了)";
           button.style.backgroundColor = 'green';
           button.style.color = 'white';
         } else {
+          button.textContent = section.fileName;
           button.style.backgroundColor = '#007bff';
           button.style.color = 'white';
         }
         button.onclick = () => loadSection(idx);
         sectionContainer.appendChild(button);
       });
-      // My単語帳ボタン：常に表示
-      let myWords = loadFromLocalStorage('myWords') || [];
-      if (myWords.length > 0) {
-        const myButton = document.createElement('button');
-        myButton.textContent = "My単語帳";
-        myButton.style.backgroundColor = '#007bff';
-        myButton.style.color = 'white';
-        myButton.onclick = () => loadMyWords();
-        sectionContainer.appendChild(myButton);
-      }
     }
     createSectionButtons();
 
@@ -370,7 +360,7 @@
       const meaningDisplay = document.getElementById('meaningDisplay');
       const hintDisplay = document.getElementById('hintDisplay');
       const showWordListButton = document.getElementById('showWordListButton');
-      // instruction表示時は左揃え・改行を反映
+      // instruction表示時は、左揃え・改行を反映するためCSSクラスを適用
       cardTitle.className = "instruction";
       cardTitle.textContent = sections[currentSectionIndex].instruction;
       meaningDisplay.textContent = "";
@@ -390,7 +380,7 @@
     /********** 単語帳表示 **********/
     function showWordList() {
       isInstructionView = false;
-      // 単語帳表示時は、ボタンの表示を通常に戻す
+      // 単語帳表示時は、各操作ボタンを表示
       document.getElementById('confirmButton').style.display = 'inline';
       document.getElementById('learnedButton').style.display = 'inline';
       document.getElementById('notLearnedButton').style.display = 'inline';
@@ -464,7 +454,7 @@
       });
     }
 
-    /********** 覚えた処理（単語を削除して進捗更新） **********/
+    /********** 覚えた処理 **********/
     function markAsLearned() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const currentSection = sections[currentSectionIndex];
@@ -477,7 +467,7 @@
       saveToLocalStorage('sections', sections);
       showCard();
       updateProgressDisplay();
-      // セクションが終了していれば、再度セクションボタン色を更新
+      // セクションが終了していれば、セクションボタンの色を更新
       createSectionButtons();
     }
 
@@ -513,15 +503,23 @@
     function resetSection() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const currentSection = sections[currentSectionIndex];
-      // オリジナルの単語群から再初期化し、進捗をクリアする
-      currentSection.words = currentSection.originalWords.slice();
-      currentSection.progress = [];
+      // My単語帳の場合は、リセットすると空にする
+      if (currentSection.fileName === "My単語帳") {
+        currentSection.words = [];
+        currentSection.originalWords = [];
+        currentSection.progress = [];
+        saveToLocalStorage('myWords', []);
+        alert("My単語帳をリセットしました。");
+      } else {
+        // 通常セクションはオリジナルの単語群から再初期化
+        currentSection.words = currentSection.originalWords.slice();
+        currentSection.progress = [];
+        alert("セクションの進捗をリセットしました。");
+      }
       currentWordIndex = 0;
       saveToLocalStorage('sections', sections);
       showCard();
       updateProgressDisplay();
-      alert("セクションの進捗をリセットしました。");
-      // セクションボタン色の更新
       createSectionButtons();
     }
 
@@ -579,7 +577,7 @@
       URL.revokeObjectURL(url);
     }
 
-    /********** ハンバーガーメニューのトグル処理（クリック伝播停止） **********/
+    /********** ハンバーガーメニューのトグル処理 **********/
     document.querySelector('.hamburger-button').addEventListener('click', (e) => {
       e.stopPropagation();
       const menuContent = document.querySelector('.menu-content');
