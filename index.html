@@ -130,12 +130,14 @@
     .menu-content button:hover {
       background-color: #f0f8ff;
     }
+    /* ファイル入力は非表示 */
     input[type="file"] {
       display: none;
     }
   </style>
 </head>
 <body>
+  <!-- ヘッダー -->
   <div id="header">
     <div>
       <button onclick="shuffleWords()">シャッフル</button>
@@ -157,90 +159,66 @@
   <input type="file" id="importFileAdd" accept=".csv" onchange="importCSV(event, 'add')">
   <input type="file" id="importFileReplace" accept=".csv" onchange="importCSV(event, 'replace')">
 
+  <!-- 進捗・セクション表示 -->
   <div id="progress">進捗：---</div>
   <div id="currentSection">セクション: ---</div>
 
+  <!-- カード表示部 -->
   <div class="card">
     <h2 id="wordDisplay">Loading...</h2>
     <p id="meaningDisplay"></p>
     <p id="hintDisplay"></p>
   </div>
 
+  <!-- アクションボタン群 -->
   <div class="actions">
     <button id="confirmButton" onclick="showBack()">答えを見る</button>
     <button id="learnedButton" onclick="markAsLearned()">覚えた</button>
     <button id="notLearnedButton" onclick="nextCard()">次の単語</button>
-    <button id="hintButton" onclick="showHint()">ヒント</button>
+    <!-- ヒントボタン→発音記号ボタンへ -->
+    <button id="hintButton" onclick="showHint()">発音記号</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
     <button id="addToMyWordsButton" onclick="addToMyWords()">My単語帳に追加</button>
+    <!-- 発音の仕方ページから単語帳表示へ切り替えるボタン -->
     <button id="showWordListButton" onclick="showWordList()" style="display: none;">単語帳を表示する</button>
   </div>
 
+  <!-- セクション切り替えボタン -->
   <div id="sections"></div>
 
   <script>
-    /********** グローバル変数など（セクション管理、初期化、CSVパース等）は前回のコードと同様です **********/
-    // ※ここでは省略せず、前回提示した全体コードの内容をそのまま利用してください
-    // ---（前回のコードの内容）---
-
-    /********** ハンバーガーメニューのトグル処理 修正 **********/
-    document.querySelector('.hamburger-button').addEventListener('click', (e) => {
-      // クリックイベントの伝播を止める
-      e.stopPropagation();
-      const menuContent = document.querySelector('.menu-content');
-      if (menuContent.style.display === 'block') {
-        menuContent.style.display = 'none';
-      } else {
-        menuContent.style.display = 'block';
-      }
-    });
-    document.addEventListener('click', (e) => {
-      const menu = document.querySelector('.hamburger-menu');
-      if (!menu.contains(e.target)) {
-        document.querySelector('.menu-content').style.display = 'none';
-      }
-    });
-
-    /********** 以下、前回提示したコードの残りの処理（CSVパース、セクション読み込み、カード表示、操作関数等） **********/
-    
-    // ここから下は前回提示したコードの該当部分をそのまま使用してください
-    // 例：
+    /********** グローバル変数 **********/
+    // 各セクションはオブジェクト { fileName, instruction, words: [ {id, word, phonetic, partOfSpeech, meaning} ], progress: [] }
     let sections = [];
-    let currentSectionIndex = null;
-    let isInstructionView = true;
-    let currentWordIndex = 0;
+    let currentSectionIndex = null;  // 現在のセクションのインデックス
+    let isInstructionView = true;      // 発音の仕方ページを表示中かどうか
+    let currentWordIndex = 0;          // 単語帳表示時の現在の単語インデックス
 
+    /********** ローカルストレージ操作 **********/
     const saveToLocalStorage = (key, value) => localStorage.setItem(key, JSON.stringify(value));
     const loadFromLocalStorage = (key) => JSON.parse(localStorage.getItem(key) || 'null');
 
-    // 初期CSV（サンプル）
-    const defaultCSV = `æ\tェア\t「あ」に「え」が加わった長めの音\tくちびるを横に引っ張り、長めに発音する。
-B01001,add,æd,動詞,加える、（数値を）足す
-B01002,after,ˈæfˌtər,前置詞,～のあとに（の）、～以降に
-B01003,accident,ˈæksədənt,名詞,事故、災難、偶然の出来事
-B01004,action,ˈækʃən,名詞,動作`;
-
-    if (!loadFromLocalStorage('sections')) {
-      const defaultSection = parseCSV(defaultCSV, "default.csv");
-      sections.push(defaultSection);
-      saveToLocalStorage('sections', sections);
-    } else {
-      sections = loadFromLocalStorage('sections');
-    }
-    loadSection(0);
-
+    /********** CSVパース処理 **********/
+    // CSVは、先頭部分が発音の仕方（instruction）で、"#単語データ"行より前の行全体（改行を保持）をinstructionとして扱う。
+    // "#単語データ"以降が単語データ（各行：ID,英単語,発音記号,品詞,意味）
     function parseCSV(csvText, fileName) {
-      const lines = csvText.trim().split(/\r?\n/);
-      if (lines.length === 0) return null;
-      let instructionLine = lines[0];
-      let instruction = "";
-      if (instructionLine.indexOf("\t") !== -1) {
-        instruction = instructionLine.split("\t").join("\n");
-      } else {
-        instruction = instructionLine;
+      const lines = csvText.split(/\r?\n/);
+      let instructionLines = [];
+      let dataStartIndex = 0;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("#単語データ")) {
+          dataStartIndex = i + 1;
+          break;
+        }
+        if (line !== "") {
+          instructionLines.push(line);
+        }
       }
+      // instruction部分は改行を保持し、右詰めで表示する予定
+      let instruction = instructionLines.join("\n");
       let words = [];
-      for (let i = 1; i < lines.length; i++) {
+      for (let i = dataStartIndex; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const parts = line.split(',');
@@ -262,6 +240,7 @@ B01004,action,ˈækʃən,名詞,動作`;
       };
     }
 
+    /********** CSVインポート処理 **********/
     function importCSV(event, mode) {
       const file = event.target.files[0];
       if (!file) return;
@@ -290,11 +269,13 @@ B01004,action,ˈækʃən,名詞,動作`;
       reader.readAsText(file, 'UTF-8');
     }
 
+    /********** セクションボタン生成 **********/
     function createSectionButtons() {
       const sectionContainer = document.getElementById('sections');
       sectionContainer.innerHTML = '';
       sections.forEach((section, idx) => {
         const button = document.createElement('button');
+        // セクション名はファイル名を利用
         button.textContent = section.fileName;
         button.onclick = () => loadSection(idx);
         sectionContainer.appendChild(button);
@@ -302,6 +283,7 @@ B01004,action,ˈækʃən,名詞,動作`;
     }
     createSectionButtons();
 
+    /********** セクション読み込み **********/
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       isInstructionView = true;
@@ -321,32 +303,42 @@ B01004,action,ˈækʃən,名詞,動作`;
       const progressDisplay = document.getElementById('progress');
       if (sections[currentSectionIndex]) {
         const total = sections[currentSectionIndex].words.length;
+        // 進捗は、単語リストから削除された単語数として表示
         const learned = sections[currentSectionIndex].progress.length;
-        progressDisplay.textContent = `進捗: ${learned} / ${total}`;
+        progressDisplay.textContent = `進捗: ${learned} / ${total + learned}`;
       } else {
         progressDisplay.textContent = "進捗: ---";
       }
     }
+
+    /********** 発音の仕方ページ表示 **********/
     function showInstructionView() {
       isInstructionView = true;
       const cardTitle = document.getElementById('wordDisplay');
       const meaningDisplay = document.getElementById('meaningDisplay');
       const hintDisplay = document.getElementById('hintDisplay');
       const showWordListButton = document.getElementById('showWordListButton');
+      // instruction表示時は右詰めに
+      cardTitle.style.textAlign = 'right';
       cardTitle.textContent = sections[currentSectionIndex].instruction;
       meaningDisplay.textContent = "";
       hintDisplay.textContent = "";
+      // 操作ボタンは非表示
       document.getElementById('confirmButton').style.display = 'none';
       document.getElementById('learnedButton').style.display = 'none';
       document.getElementById('notLearnedButton').style.display = 'none';
       document.getElementById('hintButton').style.display = 'none';
       document.getElementById('speakButton').style.display = 'none';
       document.getElementById('addToMyWordsButton').style.display = 'none';
+      // instruction view では「単語帳を表示する」ボタンを表示
       showWordListButton.style.display = 'inline';
       updateProgressDisplay();
     }
+
+    /********** 単語帳表示 **********/
     function showWordList() {
       isInstructionView = false;
+      // 単語帳表示時は、ボタンの表示を通常に戻す
       document.getElementById('confirmButton').style.display = 'inline';
       document.getElementById('learnedButton').style.display = 'inline';
       document.getElementById('notLearnedButton').style.display = 'inline';
@@ -354,9 +346,13 @@ B01004,action,ˈækʃən,名詞,動作`;
       document.getElementById('speakButton').style.display = 'inline';
       document.getElementById('addToMyWordsButton').style.display = 'inline';
       document.getElementById('showWordListButton').style.display = 'none';
+      // 単語カード表示時は、テキスト配置を中央に戻す
+      document.getElementById('wordDisplay').style.textAlign = 'center';
       showCard();
       updateProgressDisplay();
     }
+
+    /********** 単語カード表示 **********/
     function showCard() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const currentSection = sections[currentSectionIndex];
@@ -375,17 +371,23 @@ B01004,action,ˈækʃən,名詞,動作`;
       document.getElementById('meaningDisplay').textContent = "";
       document.getElementById('hintDisplay').textContent = "";
     }
+
+    /********** 答えを見る処理 **********/
     function showBack() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
+      // 表示内容：意味（品詞付き）と発音記号（発音記号ボタン用）
       document.getElementById('meaningDisplay').textContent = 
         `【${wordObj.partOfSpeech}】 ${wordObj.meaning}`;
       document.getElementById('hintDisplay').textContent = 
         `発音記号：${wordObj.phonetic}`;
+      // 「答えを見る」時に音声再生
       speakCurrentWord();
     }
+
+    /********** 次の単語 **********/
     function nextCard() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const currentSection = sections[currentSectionIndex];
@@ -396,6 +398,8 @@ B01004,action,ˈækʃən,名詞,動作`;
       speakCurrentWord();
       updateProgressDisplay();
     }
+
+    /********** 発音再生 **********/
     function speakCurrentWord() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const words = sections[currentSectionIndex].words;
@@ -407,22 +411,33 @@ B01004,action,ˈækʃən,名詞,動作`;
         console.error("Audio playback error:", error);
       });
     }
+
+    /********** 覚えた処理（単語を削除） **********/
     function markAsLearned() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const currentSection = sections[currentSectionIndex];
-      if (!currentSection.progress.includes(currentWordIndex)) {
-        currentSection.progress.push(currentWordIndex);
+      // 対象単語を削除し、progress にも記録（削除済み件数として表示に利用）
+      currentSection.progress.push(currentWordIndex);
+      currentSection.words.splice(currentWordIndex, 1);
+      if (currentWordIndex >= currentSection.words.length) {
+        currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      nextCard();
+      showCard();
+      updateProgressDisplay();
     }
+
+    /********** 発音記号ボタン（旧：ヒントボタン） **********/
     function showHint() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
+      // 発音記号を再表示（必要に応じてダイアログなどでも可）
       document.getElementById('hintDisplay').textContent = 
         `発音記号：${words[currentWordIndex].phonetic}`;
     }
+
+    /********** シャッフル **********/
     function shuffleWords() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
       const currentSection = sections[currentSectionIndex];
@@ -440,18 +455,42 @@ B01004,action,ˈækʃən,名詞,動作`;
       showCard();
       alert("単語をシャッフルしました。");
     }
+
+    /********** リセット **********/
     function resetSection() {
       if (!sections[currentSectionIndex] || isInstructionView) return;
+      // セクション内の進捗をリセット（単語リストを再構築＝今回の仕様では進捗として削除済み件数のみ）
       sections[currentSectionIndex].progress = [];
-      currentWordIndex = 0;
+      // ※進捗リセットの後、単語リストは元に戻せないため、ここでは進捗表示のみリセットとする
+      // （必要に応じて、元CSVから再読込する処理に変更してください）
       saveToLocalStorage('sections', sections);
       showCard();
       updateProgressDisplay();
       alert("セクションの進捗をリセットしました。");
     }
+
+    /********** My単語帳機能の実装 **********/
+    function addToMyWords() {
+      if (!sections[currentSectionIndex] || isInstructionView) return;
+      const words = sections[currentSectionIndex].words;
+      if (!words[currentWordIndex]) return;
+      const currentWord = words[currentWordIndex];
+      // ローカルストレージからmyWordsを読み込み
+      let myWords = loadFromLocalStorage('myWords') || [];
+      // 重複チェック（IDで判定）
+      if (myWords.some(word => word.id === currentWord.id)) {
+        alert("この単語は既にMy単語帳に登録されています。");
+        return;
+      }
+      myWords.push(currentWord);
+      saveToLocalStorage('myWords', myWords);
+      alert(`単語「${currentWord.word}」をMy単語帳に追加しました。`);
+    }
+
+    /********** エクスポート処理 **********/
     function exportCSV() {
       let csvContent = "";
-      sections.forEach((section, idx) => {
+      sections.forEach((section) => {
         csvContent += `# セクション: ${section.fileName}\n`;
         section.words.forEach(word => {
           csvContent += `${word.id},${word.word},${word.phonetic},${word.partOfSpeech},${word.meaning}\n`;
@@ -467,11 +506,57 @@ B01004,action,ˈækʃən,名詞,動作`;
       URL.revokeObjectURL(url);
     }
     function exportMyWordsToCSV() {
-      alert("My単語帳のエクスポートは未実装です。");
+      let myWords = loadFromLocalStorage('myWords') || [];
+      if (myWords.length === 0) {
+        alert("My単語帳にデータがありません。");
+        return;
+      }
+      let csvContent = "";
+      myWords.forEach(word => {
+        csvContent += `${word.id},${word.word},${word.phonetic},${word.partOfSpeech},${word.meaning}\n`;
+      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'MyWords.csv';
+      a.click();
+      URL.revokeObjectURL(url);
     }
-    function addToMyWords() {
-      alert("My単語帳への追加処理は未実装です。");
+
+    /********** ハンバーガーメニューのトグル処理（クリック伝播停止） **********/
+    document.querySelector('.hamburger-button').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menuContent = document.querySelector('.menu-content');
+      menuContent.style.display = (menuContent.style.display === 'block') ? 'none' : 'block';
+    });
+    document.addEventListener('click', (e) => {
+      const menu = document.querySelector('.hamburger-menu');
+      if (!menu.contains(e.target)) {
+        document.querySelector('.menu-content').style.display = 'none';
+      }
+    });
+
+    /********** 初期化 **********/
+    // 初期CSV（サンプル）
+    const defaultCSV = `æ	
+ェア	
+「あ」に「え」が加わった長めの音	
+くちびるを横に引っ張り、長めに発音する。
+#単語データ 
+B01001,add,æd,動詞,加える、（数値を）足す
+B01002,after,ˈæfˌtər,前置詞,～のあとに（の）、～以降に
+B01003,accident,ˈæksədənt,名詞,事故、災難、偶然の出来事
+B01004,action,ˈækʃən,名詞,動作`;
+
+    if (!loadFromLocalStorage('sections')) {
+      const defaultSection = parseCSV(defaultCSV, "default.csv");
+      sections.push(defaultSection);
+      saveToLocalStorage('sections', sections);
+    } else {
+      sections = loadFromLocalStorage('sections');
     }
+    loadSection(0);
   </script>
 </body>
 </html>
