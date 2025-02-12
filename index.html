@@ -36,7 +36,7 @@
       font-weight: bold;
       color: #007bff;
     }
-    /* 発音の仕方表示領域：単語帳と同じ幅、角丸、固定高さ */
+    /* 発音の仕方表示領域：単語帳と同じ幅・角丸・固定高さ */
     #guideDisplay {
       width: 90%;
       max-width: 400px;
@@ -409,17 +409,17 @@
       const words = currentSection.words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 裏面：英単語（中央寄せ、太字、2em、上下余白2px）
+      // 英単語：同じ大きさ、太字、上下余白2px、左詰め
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
-      // 水平線：カード領域いっぱい（100%）、上下余白20px（固定）
+        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:left; width:100%;">${wordObj.word}</div>`;
+      // 発音記号：英単語の下に中央表示
+      document.getElementById('hintDisplay').innerHTML =
+        `<div style="font-size:1.2em; margin:2px 0; text-align:center; width:100%;">/ ${wordObj.phonetic} /</div>`;
+      // 水平線：カード領域いっぱいに固定（width:100%）で表示、上下余白20px
       let hrHTML = `<hr style="width:100%; margin:20px 0;">`;
-      // 意味：左詰め、幅100%、上下余白20px、余白なしで左端から表示
+      // 意味：左詰め、幅100%、上下余白20px（余白は固定）、領域の左端から表示
       let meaningHTML = `<div style="text-align:left; width:100%; margin:20px 0;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
-      // 発音記号：左詰め、幅100%、上下余白20px
-      let phoneticHTML = `<div style="text-align:left; width:100%; margin:20px 0;">/ ${wordObj.phonetic} /</div>`;
       document.getElementById('meaningDisplay').innerHTML = hrHTML + meaningHTML;
-      document.getElementById('hintDisplay').innerHTML = phoneticHTML;
       speakCurrentWord();
     }
 
@@ -460,7 +460,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後はそのまま前面表示で更新し、次の単語を表示・発音する
+      // 覚えた後は前面表示で更新し、次の単語を表示・発音
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
