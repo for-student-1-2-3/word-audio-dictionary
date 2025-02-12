@@ -66,7 +66,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction 用 */
+    /* instruction 用（guideDisplayに表示するので、カード内は通常表示） */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -197,7 +197,7 @@
     <!-- 前面（英単語のみ表示）：表示するのは「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）：表示するのは「覚えた！」と「間違えた！」と「発音」 -->
+    <!-- 裏面（意味など表示）：表示するのは「覚えた！」、「間違えた！」、「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -216,7 +216,7 @@
     /********** ローカルストレージ操作 **********/
     const saveToLocalStorage = (key, value) =>
       localStorage.setItem(key, JSON.stringify(value));
-    // "sections" がない場合は空の配列を返す
+    // "sections" が保存されていない場合は空の配列を返す
     const loadFromLocalStorage = (key) => {
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : [];
@@ -363,7 +363,7 @@
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
-        // 裏面表示：表示するのは「覚えた！」「間違えた！」と「発音」
+        // 裏面表示：表示するのは「覚えた！」、「間違えた！」、「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
@@ -395,7 +395,7 @@
       document.getElementById('hintDisplay').textContent = "";
     }
 
-    /********** 裏面表示（答えを見る） **********/
+    /********** 裏面表示（答え） **********/
     function showBack() {
       if (!sections[currentSectionIndex]) return;
       isBackShown = true;
@@ -403,10 +403,15 @@
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      document.getElementById('meaningDisplay').textContent =
-        `【${wordObj.partOfSpeech}】 ${wordObj.meaning}`;
-      document.getElementById('hintDisplay').textContent =
-        `発音記号：${wordObj.phonetic}`;
+      // 裏面のデザイン：
+      // 英単語：太字・大きく表示
+      // 水平線、次に左揃えで【品詞】意味、その下に / 発音記号 /、さらに水平線
+      document.getElementById('wordDisplay').innerHTML =
+        `<div style="font-weight:bold; font-size:2em;">${wordObj.word}</div>`;
+      document.getElementById('meaningDisplay').innerHTML =
+        `<hr><div style="margin-left:10px;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      document.getElementById('hintDisplay').innerHTML =
+        `<div style="margin-left:10px;">/ ${wordObj.phonetic} /</div><hr>`;
       speakCurrentWord();
     }
 
@@ -447,7 +452,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 「覚えた！」後は、すぐに前面表示に戻して現在の単語（次の単語）を表示・発音
+      // 覚えた後はそのまま前面表示で更新（次の単語がその位置に来る）
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
