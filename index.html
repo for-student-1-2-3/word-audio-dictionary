@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>単語帳アプリ</title>
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     /* 共通設定 */
@@ -37,11 +36,11 @@
       font-weight: bold;
       color: #007bff;
     }
-    /* 発音の仕方表示領域（カードと同じ幅・角丸・固定高さ） */
+    /* 発音の仕方表示領域：単語帳と同じ幅、角丸、固定高さ */
     #guideDisplay {
       width: 90%;
       max-width: 400px;
-      height: 100px; /* 固定高さ */
+      height: 100px;  /* 固定高さ */
       margin: 10px auto;
       padding: 10px;
       border: 1px solid #ddd;
@@ -53,7 +52,7 @@
       color: #333;
       overflow: auto;
     }
-    /* 単語帳（カード）領域 */
+    /* カード（単語帳領域） */
     .card {
       width: 90%;
       max-width: 400px;
@@ -193,10 +192,10 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ）：「答え」と「発音」 -->
+    <!-- 前面（英単語のみ表示）：「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など）：「覚えた！」「間違えた！」「発音」 -->
+    <!-- 裏面（意味など表示）：「覚えた！」「間違えた！」「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -313,7 +312,7 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // リロード時も最新のセクション情報をlocalStorageから読み込む
+      // 初回起動またはリロード時、localStorageから最新のセクション情報を読み込む
       const storedSections = loadFromLocalStorage('sections');
       if (storedSections.length > 0) {
         sections = storedSections;
@@ -366,7 +365,7 @@
         document.getElementById('confirmButton').style.display = 'none';
         document.getElementById('learnedButton').innerText = "覚えた！";
         document.getElementById('backNextButton').innerText = "間違えた！";
-        // 裏面のボタン順序を再配置： 覚えた！→間違えた！→発音
+        // 裏面のボタン順序を再配置： 覚えた！ → 間違えた！ → 発音
         let container = document.querySelector('.actions');
         let learned = document.getElementById('learnedButton');
         let backNext = document.getElementById('backNextButton');
@@ -394,9 +393,9 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      // 表面：英単語を太字・2em、上下余白2px、左詰め（領域いっぱい）
+      // 表面：英単語を太字・2em、上下余白2px、中央寄せ
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:left; width:100%;">${wordObj.word}</div>`;
+        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
       document.getElementById('meaningDisplay').textContent = "";
       document.getElementById('hintDisplay').textContent = "";
     }
@@ -410,15 +409,16 @@
       const words = currentSection.words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 英単語は表面と同じ大きさ・左詰め
+      // 裏面：英単語（中央寄せ、太字、2em、上下余白2px）
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:left; width:100%;">${wordObj.word}</div>`;
-      // 罫線をカード領域いっぱい（width:100%）に、上下余白20px
-      let hr = `<hr style="width:100%; margin:20px 0;">`;
-      // 意味と発音記号を、余白を増やして左詰め（左右余白0、上下余白20px）
+        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
+      // 水平線：カード領域いっぱい（100%）、上下余白20px（固定）
+      let hrHTML = `<hr style="width:100%; margin:20px 0;">`;
+      // 意味：左詰め、幅100%、上下余白20px、余白なしで左端から表示
       let meaningHTML = `<div style="text-align:left; width:100%; margin:20px 0;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      // 発音記号：左詰め、幅100%、上下余白20px
       let phoneticHTML = `<div style="text-align:left; width:100%; margin:20px 0;">/ ${wordObj.phonetic} /</div>`;
-      document.getElementById('meaningDisplay').innerHTML = hr + meaningHTML;
+      document.getElementById('meaningDisplay').innerHTML = hrHTML + meaningHTML;
       document.getElementById('hintDisplay').innerHTML = phoneticHTML;
       speakCurrentWord();
     }
@@ -460,7 +460,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後は前面表示で更新し、次の単語をその位置で表示・発音する
+      // 覚えた後はそのまま前面表示で更新し、次の単語を表示・発音する
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
