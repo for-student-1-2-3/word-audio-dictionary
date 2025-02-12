@@ -66,7 +66,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction用（guideDisplayに表示するので、カード内は通常表示） */
+    /* instruction 用 */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -194,10 +194,10 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ表示）: 「答え」「発音」 -->
+    <!-- 前面（英単語のみ表示）：表示するのは「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）: 「覚えた！」「間違えた！」と「発音」 -->
+    <!-- 裏面（意味など表示）：表示するのは「覚えた！」「間違えた！」と「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -210,20 +210,19 @@
     // 各セクションは { fileName, instruction, words, originalWords, progress }
     let sections = [];
     let currentSectionIndex = null;  // 現在のセクションのインデックス
-    let isBackShown = false;           // false: 前面（英単語のみ）、true: 裏面（意味・品詞・発音記号表示）
+    let isBackShown = false;           // false: 前面（英単語のみ）、true: 裏面（意味表示）
     let currentWordIndex = 0;          // 現在の単語インデックス
 
     /********** ローカルストレージ操作 **********/
     const saveToLocalStorage = (key, value) =>
       localStorage.setItem(key, JSON.stringify(value));
+    // 値がない場合は空配列を返す
     const loadFromLocalStorage = (key) => {
       const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : null;
+      return data ? JSON.parse(data) : [];
     };
 
     /********** CSVパース処理 **********/
-    // CSVの先頭部分（#単語データ行より前）を結合して「発音の仕方」（instruction）とし、
-    // #単語データ以降の各行を単語データ（ID,英単語,発音記号,品詞,意味）として処理
     function parseCSV(csvText, fileName) {
       const lines = csvText.split(/\r?\n/);
       let instructionLines = [];
@@ -318,26 +317,11 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // ここで、保存済みセクションがあるかをチェック（空配列の場合も考慮）
+      // 初回起動またはリロード時はlocalStorageから最新のsectionsを読み込む
       const storedSections = loadFromLocalStorage('sections');
-      if (!storedSections || storedSections.length === 0) {
-        // デフォルトの場合
-        const defaultCSV = `æ	
-ェア	
-「あ」に「え」が加わった長めの音	
-くちびるを横に引っ張り、長めに発音する。
-#単語データ 
-B01001,add,æd,動詞,加える、（数値を）足す
-B01002,after,ˈæfˌtər,前置詞,～のあとに（の）、～以降に
-B01003,accident,ˈæksədənt,名詞,事故、災難、偶然の出来事
-B01004,action,ˈækʃən,名詞,動作`;
-        const defaultSection = parseCSV(defaultCSV, "æの音.csv");
-        sections = [defaultSection];
-        saveToLocalStorage('sections', sections);
-      } else {
+      if (storedSections.length > 0) {
         sections = storedSections;
       }
-      // 表示は常にCSVセクションの場合、guideDisplay に instruction を表示し【表面】（英単語）が表示される
       isBackShown = false;
       updateSectionDisplay();
       updateGuideDisplay();
@@ -365,7 +349,6 @@ B01004,action,ˈækʃən,名詞,動作`;
         progressDisplay.textContent = "進捗: ---";
       }
     }
-    // guideDisplay は CSVセクションの場合に instruction を表示
     function updateGuideDisplay() {
       const guideDisplay = document.getElementById('guideDisplay');
       guideDisplay.textContent = sections[currentSectionIndex].instruction;
@@ -380,12 +363,12 @@ B01004,action,ˈækʃən,名詞,動作`;
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
-        // 裏面表示：表示するのは「覚えた！」「間違えた！」と「発音」
+        // 裏面表示：表示するのは「覚えた！」と「間違えた！」と「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
-        // ボタンラベルの更新
+        // ボタンラベル更新
         document.getElementById('learnedButton').innerText = "覚えた！";
         document.getElementById('backNextButton').innerText = "間違えた！";
       }
@@ -428,7 +411,7 @@ B01004,action,ˈækʃən,名詞,動作`;
       speakCurrentWord();
     }
 
-    /********** 「間違えた！」ボタン処理（裏面用）で次の単語へ **********/
+    /********** 「間違えた！」ボタン処理（裏面用） **********/
     function nextCard() {
       if (!sections[currentSectionIndex]) return;
       const currentSection = sections[currentSectionIndex];
@@ -455,7 +438,7 @@ B01004,action,ˈækʃən,名詞,動作`;
       });
     }
 
-    /********** 「覚えた！」処理 **********/
+    /********** 「覚えた！」ボタン処理 **********/
     function markAsLearned() {
       if (!sections[currentSectionIndex] || !isBackShown) return;
       const currentSection = sections[currentSectionIndex];
@@ -465,7 +448,7 @@ B01004,action,ˈækʃən,名詞,動作`;
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 「覚えた！」を押したら、次の単語を自動で発音する（次の単語へ進む）
+      // 「覚えた！」を押したら次の単語へ自動移行・発音
       nextCard();
     }
 
@@ -536,8 +519,12 @@ B01004,action,ˈækʃən,名詞,動作`;
     });
 
     /********** 初期化 **********/
-    // 初期CSV（サンプル）
-    const defaultCSV = `æ	
+    // 初回起動またはリロード時、localStorage の "sections" を読み込む
+    const storedSections = loadFromLocalStorage('sections');
+    if (storedSections && storedSections.length > 0) {
+      sections = storedSections;
+    } else {
+      const defaultCSV = `æ	
 ェア	
 「あ」に「え」が加わった長めの音	
 くちびるを横に引っ張り、長めに発音する。
@@ -546,16 +533,11 @@ B01001,add,æd,動詞,加える、（数値を）足す
 B01002,after,ˈæfˌtər,前置詞,～のあとに（の）、～以降に
 B01003,accident,ˈæksədənt,名詞,事故、災難、偶然の出来事
 B01004,action,ˈækʃən,名詞,動作`;
-
-    // 初回起動時、localStorage の "sections" が保存されていないまたは空の場合、defaultCSV を登録
-    const storedSections = loadFromLocalStorage('sections');
-    if (!storedSections || storedSections.length === 0) {
       const defaultSection = parseCSV(defaultCSV, "æの音.csv");
       sections.push(defaultSection);
       saveToLocalStorage('sections', sections);
-    } else {
-      sections = storedSections;
     }
+    createSectionButtons();
     loadSection(0);
   </script>
 </body>
