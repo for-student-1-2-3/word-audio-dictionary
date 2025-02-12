@@ -67,7 +67,7 @@
       align-items: center;
       overflow: hidden;
     }
-    /* instruction 用（guideDisplayに表示するので、カード内は通常表示） */
+    /* instruction 用（guideDisplayに表示するため、カード内は通常表示） */
     .instruction {
       white-space: pre-wrap;
       text-align: left;
@@ -198,7 +198,7 @@
     <!-- 前面（英単語のみ表示）：表示するのは「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）：表示するのは「覚えた！」、「間違えた！」、「発音」 -->
+    <!-- 裏面（意味など表示）：表示するのは「覚えた！」「間違えた！」「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -361,15 +361,14 @@
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
-        // 裏面表示：表示するのは「覚えた！」、「間違えた！」、「発音」
+        // 裏面表示：表示するのは「覚えた！」「間違えた！」「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
-        // 両ボタンのラベルを更新
         document.getElementById('learnedButton').innerText = "覚えた！";
         document.getElementById('backNextButton').innerText = "間違えた！";
-        // 裏面ではボタンの表示順序を再配置： 覚えた！ → 間違えた！ → 発音
+        // 裏面のボタン順序を「覚えた！」「間違えた！」「発音」に再配置
         let container = document.querySelector('.actions');
         let learned = document.getElementById('learnedButton');
         let backNext = document.getElementById('backNextButton');
@@ -397,8 +396,9 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      // 表面は英単語を太字・大きく表示（上下余白を小さめ）
-      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
+      // 表面は英単語を太字・大きく、上下余白を少なめに
+      document.getElementById('wordDisplay').innerHTML =
+        `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
       document.getElementById('meaningDisplay').textContent = "";
       document.getElementById('hintDisplay').textContent = "";
     }
@@ -411,13 +411,17 @@
       const words = sections[currentSectionIndex].words;
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
-      // 英単語（同じ大きさ、太字、上下余白小）
-      document.getElementById('wordDisplay').innerHTML = `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
-      // 意味の上に一定幅の水平線（90%）
-      document.getElementById('meaningDisplay').innerHTML = `<hr style="width:90%; margin:10px auto;">` +
-         `<div style="text-align:left; width:90%; margin:10px auto;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
-      // 発音記号（左揃え、水平線は削除）
-      document.getElementById('hintDisplay').innerHTML = `<div style="text-align:left; width:90%; margin:10px auto;">/ ${wordObj.phonetic} /</div>`;
+      // 英単語は表面と同じ太字・大きさで、上下余白を小さめに
+      document.getElementById('wordDisplay').innerHTML =
+        `<div style="font-weight:bold; font-size:2em; margin:5px 0;">${wordObj.word}</div>`;
+      // 意味の上の水平線：領域ぎりぎりまで伸ばす（幅100%）、固定幅として表示
+      // 余白（上下15px）を増やす
+      document.getElementById('meaningDisplay').innerHTML =
+        `<hr style="width:100%; margin:15px 0;">` +
+        `<div style="text-align:left; width:100%; margin-left:10px; text-indent:1em;">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
+      // 発音記号：左詰めで、一字分（1em）のインデントを入れる。下の水平線は削除。
+      document.getElementById('hintDisplay').innerHTML =
+        `<div style="text-align:left; width:100%; margin-left:10px; text-indent:1em;">/ ${wordObj.phonetic} /</div>`;
       speakCurrentWord();
     }
 
@@ -458,7 +462,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後はそのまま前面表示に戻して現在の単語（次の単語）を表示・発音
+      // 覚えた後はそのまま前面表示で更新（次の単語がその位置に来る）
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
