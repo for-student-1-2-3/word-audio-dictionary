@@ -197,7 +197,7 @@
     <!-- 前面（英単語のみ表示）：表示するのは「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）：表示するのは「覚えた！」「間違えた！」と「発音」 -->
+    <!-- 裏面（意味など表示）：表示するのは「覚えた！」と「間違えた！」と「発音」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -216,7 +216,7 @@
     /********** ローカルストレージ操作 **********/
     const saveToLocalStorage = (key, value) =>
       localStorage.setItem(key, JSON.stringify(value));
-    // 値がない場合は空配列を返す
+    // "sections" がない場合は空の配列を返す
     const loadFromLocalStorage = (key) => {
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : [];
@@ -317,7 +317,7 @@
     function loadSection(sectionIndex) {
       currentSectionIndex = sectionIndex;
       currentWordIndex = 0;
-      // 初回起動またはリロード時はlocalStorageから最新のsectionsを読み込む
+      // 初回起動またはリロード時、localStorageから最新のセクション情報を読み込む
       const storedSections = loadFromLocalStorage('sections');
       if (storedSections.length > 0) {
         sections = storedSections;
@@ -363,12 +363,11 @@
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
-        // 裏面表示：表示するのは「覚えた！」と「間違えた！」と「発音」
+        // 裏面表示：表示するのは「覚えた！」「間違えた！」と「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('confirmButton').style.display = 'none';
-        // ボタンラベル更新
         document.getElementById('learnedButton').innerText = "覚えた！";
         document.getElementById('backNextButton').innerText = "間違えた！";
       }
@@ -448,8 +447,12 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 「覚えた！」を押したら次の単語へ自動移行・発音
-      nextCard();
+      // 「覚えた！」後は、すぐに前面表示に戻して現在の単語（次の単語）を表示・発音
+      showCard();
+      speakCurrentWord();
+      updateProgressDisplay();
+      createSectionButtons();
+      updateActionButtons();
     }
 
     /********** シャッフル **********/
