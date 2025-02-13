@@ -36,11 +36,11 @@
       font-weight: bold;
       color: #007bff;
     }
-    /* 発音の仕方表示領域：単語帳と同じ幅・角丸・固定高さ */
+    /* 発音の仕方表示領域 */
     #guideDisplay {
       width: 90%;
       max-width: 400px;
-      height: 100px;  /* 固定高さ */
+      height: 100px;
       margin: 10px auto;
       padding: 10px;
       border: 1px solid #ddd;
@@ -153,17 +153,17 @@
     input[type="file"] {
       display: none;
     }
-    /* 裏面表示用スタイル（文字サイズに依存しない余白設定） */
+    /* 裏面表示用スタイル */
     .back-word {
       font-weight: bold;
-      font-size: 2em;
-      margin: 20px 0;  /* 中：20px */
+      font-size: 2em;         /* 英単語：大 */
+      margin: 20px 0;         /* 余白：中 */
       text-align: center;
       width: 100%;
     }
     .back-phonetic {
-      font-size: 1.6em;
-      margin: 10px 0;  /* 小：10px */
+      font-size: 1.6em;       /* 発音記号：中 */
+      margin: 10px 0;         /* 余白：小 */
       text-align: center;
       width: 100%;
     }
@@ -171,12 +171,13 @@
       width: 100%;
       border: none;
       border-top: 1px solid #ccc;
-      margin: 20px 0;  /* 中：20px */
+      margin: 20px 0;         /* 余白：中 */
     }
     .back-meaning {
+      font-size: 1.6em;       /* 品詞・意味：中（発音記号と同じサイズ） */
       text-align: left;
       width: 100%;
-      margin: 20px 0;  /* 中：20px */
+      margin: 20px 0;         /* 余白：中 */
       padding: 0;
     }
   </style>
@@ -384,7 +385,7 @@
         document.getElementById('learnedButton').style.display = 'none';
         document.getElementById('backNextButton').style.display = 'none';
       } else {
-        // 裏面表示：表示するのは「覚えた！」「間違えた！」「発音」
+        // 裏面表示：表示するのは「覚えた！」「間違えた！」と「発音」
         document.getElementById('learnedButton').style.display = 'inline';
         document.getElementById('backNextButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
@@ -419,7 +420,7 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      // 表面：英単語を太字・2em、上下余白2px、中央寄せ
+      // 表面：英単語は太字・2em、中央寄せ
       document.getElementById('wordDisplay').innerHTML =
         `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
       document.getElementById('hintDisplay').textContent = "";
@@ -436,16 +437,16 @@
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
       
-      // 英単語：中央揃え、表面と同じ文字サイズ (2em)・余白：中（20px）
+      // 英単語：大（2em）・余白：中
       const wordHTML = `<div class="back-word">${wordObj.word}</div>`;
       
-      // 発音記号：中央揃え、英単語より少し小さい文字サイズ (1.6em)・余白：小（10px）
+      // 発音記号：中（1.6em）・余白：小
       const phoneticHTML = `<div class="back-phonetic">/ ${wordObj.phonetic} /</div>`;
       
-      // 罫線：カード全体の幅に固定・余白：中（20px）
+      // 罫線：中の余白
       const hrHTML = `<hr class="back-hr">`;
       
-      // 品詞、意味：左揃え・余白：中（20px）
+      // 品詞・意味：中（1.6em、発音記号と同じサイズ）・余白：中
       const meaningHTML = `<div class="back-meaning">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
       
       document.getElementById('wordDisplay').innerHTML = wordHTML;
