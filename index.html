@@ -28,7 +28,7 @@
     /* 進捗・セクション表示 */
     #progress, #currentSection {
       text-align: center;
-      margin: 10px auto;
+      /* 余白指定を削除 */
       font-size: 1.2rem;
       font-weight: 500;
     }
@@ -41,7 +41,6 @@
       width: 90%;
       max-width: 400px;
       height: 100px;
-      margin: 10px auto;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 10px;
@@ -57,7 +56,6 @@
       width: 90%;
       max-width: 400px;
       height: 250px;
-      margin: 10px auto;
       padding: 20px;
       background-color: white;
       border-radius: 10px;
@@ -75,11 +73,9 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 10px auto;
     }
     button {
       padding: 10px 20px;
-      margin: 5px;
       border: none;
       background-color: #007bff;
       color: white;
@@ -105,7 +101,6 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       gap: 10px;
-      margin: 20px auto;
       width: 90%;
     }
     /* ハンバーガーメニュー */
@@ -144,7 +139,6 @@
       cursor: pointer;
       font-size: 1rem;
       display: block;
-      margin: 0;
     }
     .menu-content button:hover {
       background-color: #f0f8ff;
@@ -153,17 +147,15 @@
     input[type="file"] {
       display: none;
     }
-    /* 裏面表示用スタイル（修正後） */
+    /* 裏面表示用スタイル（余白指定を削除） */
     .back-word {
       font-weight: bold;
       font-size: 2em;      /* 大 */
-      margin: 20px 0;      /* 中 */
       text-align: center;
       width: 100%;
     }
     .back-phonetic {
       font-size: 1.2em;    /* 小 */
-      margin: 0;           /* 余白なし */
       text-align: center;
       width: 100%;
     }
@@ -171,13 +163,11 @@
       width: 100%;
       border: none;
       border-top: 1px solid #ccc;
-      margin: 20px 0;      /* 中 */
     }
     .back-meaning {
-      font-size: 1.2em;    /* 小（発音記号と同じサイズ） */
+      font-size: 1.2em;    /* 小 */
       text-align: left;
       width: 100%;
-      margin: 0 0 10px 0;  /* 上余白なし、下余白：小（10px） */
       padding: 0;
     }
   </style>
@@ -420,9 +410,9 @@
         currentWordIndex = 0;
       }
       const wordObj = words[currentWordIndex];
-      // 表面：英単語は太字・2em、中央寄せ
+      // 表面：英単語は太字・2em、中央寄せ（余白指定なし）
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; margin:2px 0; text-align:center; width:100%;">${wordObj.word}</div>`;
+        `<div style="font-weight:bold; font-size:2em; text-align:center; width:100%;">${wordObj.word}</div>`;
       document.getElementById('hintDisplay').textContent = "";
       document.getElementById('meaningDisplay').textContent = "";
     }
@@ -437,16 +427,16 @@
       if (!words[currentWordIndex]) return;
       const wordObj = words[currentWordIndex];
       
-      // 英単語：大（2em）、余白：中
+      // 英単語：大（2em）
       const wordHTML = `<div class="back-word">${wordObj.word}</div>`;
       
-      // 発音記号：小（1.2em）、余白：なし
+      // 発音記号：小（1.2em）、余白なし
       const phoneticHTML = `<div class="back-phonetic">/ ${wordObj.phonetic} /</div>`;
       
-      // 罫線：中の余白
+      // 罫線：中の余白（CSSのみ）
       const hrHTML = `<hr class="back-hr">`;
       
-      // 品詞・意味：小（1.2em）、余白：なし（上）、下は小（10px）
+      // 品詞・意味：小（1.2em）、余白なし（上）、下は小（デフォルト）
       const meaningHTML = `<div class="back-meaning">【${wordObj.partOfSpeech}】 ${wordObj.meaning}</div>`;
       
       document.getElementById('wordDisplay').innerHTML = wordHTML;
