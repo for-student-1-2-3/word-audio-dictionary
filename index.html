@@ -404,7 +404,7 @@
     }
 
     /********** 表面表示（答え前） **********/
-    function showCard()function showCard() {
+    function showCard() {
   if (!sections[currentSectionIndex]) return;
   isBackShown = false;
   updateActionButtons();
@@ -419,11 +419,11 @@
   if (currentWordIndex < 0 || currentWordIndex >= words.length) {
     currentWordIndex = 0;
   }
-  // 親要素に依存しないrem単位でフォントサイズを指定
+  // <span>を使い、display:block;で改行させる（h2, pの既定スタイルを上書き）
   document.getElementById('wordDisplay').innerHTML =
-    `<div style="font-weight:bold; font-size:1.5rem; text-align:center; width:100%;">意味は？</div>`;
+    `<span style="font-weight:bold; font-size:1.5rem; text-align:center; display:block;">意味は？</span>`;
   document.getElementById('hintDisplay').innerHTML =
-    `<div style="font-weight:bold; font-size:1.5rem; text-align:center; width:100%;">スペルは？</div>`;
+    `<span style="font-weight:bold; font-size:1.5rem; text-align:center; display:block;">スペルは？</span>`;
   document.getElementById('meaningDisplay').textContent = "";
 }
 
