@@ -405,27 +405,27 @@
 
     /********** 表面表示（答え前） **********/
     function showCard() {
-      if (!sections[currentSectionIndex]) return;
-      isBackShown = false;
-      updateActionButtons();
-      const currentSection = sections[currentSectionIndex];
-      const words = currentSection.words;
-      if (words.length === 0) {
-        document.getElementById('wordDisplay').textContent = "Good Job!";
-        document.getElementById('hintDisplay').textContent = "";
-        document.getElementById('meaningDisplay').textContent = "";
-        return;
-      }
-      if (currentWordIndex < 0 || currentWordIndex >= words.length) {
-        currentWordIndex = 0;
-      }
-      // 英単語は表示せず、固定テキスト「意味は？」と「スペルは？」を表示
-      document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; text-align:center; width:100%;">意味は？</div>`;
-      document.getElementById('hintDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; text-align:center; width:100%;">スペルは？</div>`;
-      document.getElementById('meaningDisplay').textContent = "";
-    }
+  if (!sections[currentSectionIndex]) return;
+  isBackShown = false;
+  updateActionButtons();
+  const currentSection = sections[currentSectionIndex];
+  const words = currentSection.words;
+  if (words.length === 0) {
+    document.getElementById('wordDisplay').textContent = "Good Job!";
+    document.getElementById('hintDisplay').textContent = "";
+    document.getElementById('meaningDisplay').textContent = "";
+    return;
+  }
+  if (currentWordIndex < 0 || currentWordIndex >= words.length) {
+    currentWordIndex = 0;
+  }
+  // 英単語は表示せず、固定テキスト「意味は？」と「スペルは？」を表示（サイズを1.5emに変更）
+  document.getElementById('wordDisplay').innerHTML =
+    `<div style="font-weight:bold; font-size:1.5em; text-align:center; width:100%;">意味は？</div>`;
+  document.getElementById('hintDisplay').innerHTML =
+    `<div style="font-weight:bold; font-size:1.5em; text-align:center; width:100%;">スペルは？</div>`;
+  document.getElementById('meaningDisplay').textContent = "";
+}
 
     /********** 裏面表示（答え） **********/
     function showBack() {
