@@ -219,10 +219,10 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 前面（英単語のみ表示）：「答え」と「発音」 -->
+    <!-- 前面（答え前）：「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（意味など表示）：「覚えた！」「間違えた！」 -->
+    <!-- 裏面（答え表示後）：「覚えた！」「間違えた！」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -234,7 +234,7 @@
     /********** グローバル変数 **********/
     let sections = []; // 各セクションは { fileName, instruction, words, originalWords, progress }
     let currentSectionIndex = null;
-    let isBackShown = false; // false: 前面（英単語のみ）、true: 裏面（意味表示）
+    let isBackShown = false; // false: 表面（答え前）、true: 裏面（答え表示）
     let currentWordIndex = 0;
 
     /********** ローカルストレージ操作 **********/
@@ -379,7 +379,7 @@
     /********** アクションボタン表示更新 **********/
     function updateActionButtons() {
       if (!isBackShown) {
-        // 前面表示：表示するのは「答え」と「発音」
+        // 表面表示：表示するのは「答え」と「発音」
         document.getElementById('confirmButton').style.display = 'inline';
         document.getElementById('speakButton').style.display = 'inline';
         document.getElementById('learnedButton').style.display = 'none';
@@ -403,7 +403,7 @@
       }
     }
 
-    /********** 前面表示（英単語のみ） **********/
+    /********** 表面表示（答え前） **********/
     function showCard() {
       if (!sections[currentSectionIndex]) return;
       isBackShown = false;
@@ -419,11 +419,11 @@
       if (currentWordIndex < 0 || currentWordIndex >= words.length) {
         currentWordIndex = 0;
       }
-      const wordObj = words[currentWordIndex];
-      // 表面：英単語は太字・2em、中央寄せ（余白指定なし）
+      // 英単語は表示せず、固定テキスト「意味は？」と「スペルは？」を表示
       document.getElementById('wordDisplay').innerHTML =
-        `<div style="font-weight:bold; font-size:2em; text-align:center; width:100%;">${wordObj.word}</div>`;
-      document.getElementById('hintDisplay').textContent = "";
+        `<div style="font-weight:bold; font-size:2em; text-align:center; width:100%;">意味は？</div>`;
+      document.getElementById('hintDisplay').innerHTML =
+        `<div style="font-weight:bold; font-size:2em; text-align:center; width:100%;">スペルは？</div>`;
       document.getElementById('meaningDisplay').textContent = "";
     }
 
@@ -492,7 +492,7 @@
         currentWordIndex = 0;
       }
       saveToLocalStorage('sections', sections);
-      // 覚えた後は前面表示で更新し、次の単語を表示・発音
+      // 覚えた後は表面表示に戻し、次の単語を表示・発音
       showCard();
       speakCurrentWord();
       updateProgressDisplay();
