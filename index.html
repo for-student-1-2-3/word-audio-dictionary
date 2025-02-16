@@ -196,7 +196,6 @@
     <div class="hamburger-menu">
       <button class="hamburger-button">≡</button>
       <div class="menu-content">
-        <!-- exportCSV ボタン削除 → 初期化ボタン追加 -->
         <button onclick="initializeSection()">初期化</button>
         <button onclick="document.getElementById('importFileAdd').click()">CSVから追加</button>
         <button onclick="document.getElementById('importFileReplace').click()">CSVで置換</button>
@@ -224,10 +223,8 @@
 
   <!-- アクションボタン群 -->
   <div class="actions">
-    <!-- 表面（答え前）：「答え」と「発音」 -->
     <button id="confirmButton" onclick="showBack()">答え</button>
     <button id="speakButton" onclick="speakCurrentWord()">発音</button>
-    <!-- 裏面（答え表示後）：「覚えた！」「間違えた！」 -->
     <button id="learnedButton" onclick="markAsLearned()">覚えた！</button>
     <button id="backNextButton" onclick="nextCard()">間違えた！</button>
   </div>
@@ -243,7 +240,8 @@
     let currentWordIndex = 0;
 
     /********** ローカルストレージ操作 **********/
-    const saveToLocalStorage = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+    const saveToLocalStorage = (key, value) =>
+      localStorage.setItem(key, JSON.stringify(value));
     const loadFromLocalStorage = (key) => {
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : [];
@@ -290,6 +288,24 @@
       };
     }
 
+    /********** セクション分割処理 **********/
+    // 1つのセクションを指定単語数（count）ごとに分割し、複数のセクションを返す
+    function splitSection(section, count) {
+      const splittedSections = [];
+      const words = section.words;
+      for (let i = 0; i < words.length; i += count) {
+        let newSection = Object.assign({}, section); // shallow copy
+        newSection.words = words.slice(i, i + count);
+        newSection.originalWords = newSection.words.slice();
+        newSection.progress = [];
+        if (words.length > count) {
+          newSection.fileName = section.fileName + " - Part " + (Math.floor(i / count) + 1);
+        }
+        splittedSections.push(newSection);
+      }
+      return splittedSections;
+    }
+
     /********** CSVインポート処理 **********/
     function importCSV(event, mode) {
       const file = event.target.files[0];
@@ -305,10 +321,12 @@
           alert("有効なCSVデータがありません。");
           return;
         }
+        // 分割処理：25単語ごとに分割
+        const splittedSections = splitSection(newSection, 25);
         if (mode === 'replace') {
-          sections = [newSection];
+          sections = splittedSections;
         } else if (mode === 'add') {
-          sections.push(newSection);
+          sections = sections.concat(splittedSections);
         }
         saveToLocalStorage('sections', sections);
         createSectionButtons();
@@ -529,7 +547,7 @@
 
     /********** 初期化機能（manifest.json を利用、全情報をクリアしてから追加） **********/
     function initializeSection() {
-      // 現在のセクション情報や学習履歴などを全てクリアする
+      // 現在のセクション情報や学習履歴を全てクリア
       sections = [];
       currentSectionIndex = null;
       currentWordIndex = 0;
@@ -562,7 +580,9 @@
           results.forEach(({ fileName, text }) => {
             const newSection = parseCSV(text, fileName);
             if (newSection) {
-              sections.push(newSection);
+              // 25単語ごとに分割して追加
+              const splittedSections = splitSection(newSection, 25);
+              splittedSections.forEach(s => sections.push(s));
             } else {
               console.warn(`CSVファイル ${fileName} から有効なデータが取得できませんでした。`);
             }
@@ -606,7 +626,9 @@ B01002,after,ˈæfˌtər,前置詞,～のあとに（の）、～以降に
 B01003,accident,ˈæksədənt,名詞,事故、災難、偶然の出来事
 B01004,action,ˈækʃən,名詞,動作`;
       const defaultSection = parseCSV(defaultCSV, "æの音.csv");
-      sections.push(defaultSection);
+      // 分割処理：25単語ごとに分割
+      const splittedSections = splitSection(defaultSection, 25);
+      sections = sections.concat(splittedSections);
       saveToLocalStorage('sections', sections);
     }
     createSectionButtons();
