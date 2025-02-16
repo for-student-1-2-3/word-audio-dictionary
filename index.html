@@ -153,7 +153,7 @@
     input[type="file"] {
       display: none;
     }
-    /* 裏面表示用スタイル（カード内の余白指定を削除） */
+    /* 裏面表示用スタイル */
     .back-word {
       font-weight: bold;
       font-size: 2em;
@@ -519,21 +519,31 @@
       updateActionButtons();
     }
 
-    /********** 初期化機能 **********/
+    /********** 初期化機能（manifest.json を利用） **********/
     function initializeSection() {
-      // 対象CSVファイル名の配列（index.html と同じディレクトリ内に存在するものとする）
-      const csvFiles = ["aの音.csv", "bの音.csv", "cの音.csv"];
-      // 各CSVファイルをfetch()で取得
-      const fetchPromises = csvFiles.map(fileName => {
-        return fetch(fileName)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`CSVファイル ${fileName} の読み込みに失敗しました。`);
-            }
-            return response.text().then(text => ({ fileName, text }));
+      fetch('manifest.json')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("manifest.json の読み込みに失敗しました。");
+          }
+          return response.json();
+        })
+        .then(manifest => {
+          if (!manifest.csvFiles || !Array.isArray(manifest.csvFiles) || manifest.csvFiles.length === 0) {
+            throw new Error("manifest.json に有効な csvFiles リストがありません。");
+          }
+          const csvFiles = manifest.csvFiles;
+          const fetchPromises = csvFiles.map(fileName => {
+            return fetch(fileName)
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`CSVファイル ${fileName} の読み込みに失敗しました。`);
+                }
+                return response.text().then(text => ({ fileName, text }));
+              });
           });
-      });
-      Promise.all(fetchPromises)
+          return Promise.all(fetchPromises);
+        })
         .then(results => {
           results.forEach(({ fileName, text }) => {
             const newSection = parseCSV(text, fileName);
@@ -546,7 +556,6 @@
           saveToLocalStorage('sections', sections);
           createSectionButtons();
           alert("初期化が完了しました。");
-          // 初期化後は先頭のセクションを読み込む
           loadSection(0);
         })
         .catch(error => {
@@ -568,7 +577,7 @@
       }
     });
 
-    /********** 初期化 **********/
+    /********** 初期化（ページ読み込み時の処理） **********/
     const storedSections = loadFromLocalStorage('sections');
     if (storedSections && storedSections.length > 0) {
       sections = storedSections;
