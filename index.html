@@ -519,50 +519,56 @@
       updateActionButtons();
     }
 
-    /********** 初期化機能（manifest.json を利用） **********/
-    function initializeSection() {
-      fetch('manifest.json')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("manifest.json の読み込みに失敗しました。");
-          }
-          return response.json();
-        })
-        .then(manifest => {
-          if (!manifest.csvFiles || !Array.isArray(manifest.csvFiles) || manifest.csvFiles.length === 0) {
-            throw new Error("manifest.json に有効な csvFiles リストがありません。");
-          }
-          const csvFiles = manifest.csvFiles;
-          const fetchPromises = csvFiles.map(fileName => {
-            return fetch(fileName)
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`CSVファイル ${fileName} の読み込みに失敗しました。`);
-                }
-                return response.text().then(text => ({ fileName, text }));
-              });
-          });
-          return Promise.all(fetchPromises);
-        })
-        .then(results => {
-          results.forEach(({ fileName, text }) => {
-            const newSection = parseCSV(text, fileName);
-            if (newSection) {
-              sections.push(newSection);
-            } else {
-              console.warn(`CSVファイル ${fileName} から有効なデータが取得できませんでした。`);
+/********** 初期化機能（manifest.json を利用、全情報をクリアしてから追加） **********/
+function initializeSection() {
+  // 現在のセクション情報や学習履歴などを全てクリアする
+  sections = [];
+  currentSectionIndex = null;
+  currentWordIndex = 0;
+  localStorage.removeItem('sections');
+
+  fetch('manifest.json')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("manifest.json の読み込みに失敗しました。");
+      }
+      return response.json();
+    })
+    .then(manifest => {
+      if (!manifest.csvFiles || !Array.isArray(manifest.csvFiles) || manifest.csvFiles.length === 0) {
+        throw new Error("manifest.json に有効な csvFiles リストがありません。");
+      }
+      const csvFiles = manifest.csvFiles;
+      const fetchPromises = csvFiles.map(fileName => {
+        return fetch(fileName)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`CSVファイル ${fileName} の読み込みに失敗しました。`);
             }
+            return response.text().then(text => ({ fileName, text }));
           });
-          saveToLocalStorage('sections', sections);
-          createSectionButtons();
-          alert("初期化が完了しました。");
-          loadSection(0);
-        })
-        .catch(error => {
-          console.error("初期化エラー:", error);
-          alert("初期化に失敗しました: " + error.message);
-        });
-    }
+      });
+      return Promise.all(fetchPromises);
+    })
+    .then(results => {
+      results.forEach(({ fileName, text }) => {
+        const newSection = parseCSV(text, fileName);
+        if (newSection) {
+          sections.push(newSection);
+        } else {
+          console.warn(`CSVファイル ${fileName} から有効なデータが取得できませんでした。`);
+        }
+      });
+      saveToLocalStorage('sections', sections);
+      createSectionButtons();
+      alert("初期化が完了しました。");
+      loadSection(0);
+    })
+    .catch(error => {
+      console.error("初期化エラー:", error);
+      alert("初期化に失敗しました: " + error.message);
+    });
+}
 
     /********** ハンバーガーメニューのトグル処理 **********/
     document.querySelector('.hamburger-button').addEventListener('click', (e) => {
